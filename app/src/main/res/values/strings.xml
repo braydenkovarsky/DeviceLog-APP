@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">InfoCore</string>
+    <string name="app_icon">InfoCore App Icon</string>
+    <string name="refresh_info">Refresh Info</string>
+    <string name="cpu_score">CPU Score</string>
+    <string name="ram_score">RAM Score</string>
+    <string name="storage_score">Storage Score</string>
+    <string name="cache_score">Cache Score</string>
+    <string name="battery_score">Battery Score</string>
+    <string name="installed_apps">Installed Apps</string>
+</resources>

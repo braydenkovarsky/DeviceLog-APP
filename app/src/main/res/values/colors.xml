@@ -1,0 +1,22 @@
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+
+    <!-- Backgrounds -->
+    <color name="bg_light">#FFF8F0</color>
+    <color name="bg_dark">#FFEDE1</color>
+    <color name="orange_bg">#FF8C65</color>
+
+    <!-- Buttons -->
+    <color name="btn_primary">#FF8C65</color>
+    <color name="btn_secondary">#FFD6B0</color>
+
+    <!-- Text -->
+    <color name="text_primary">#4E342E</color>
+    <color name="text_secondary">#7B5E57</color>
+
+    <!-- Ping Result Colors -->
+    <color name="green_ping">#4CAF50</color>
+    <color name="yellow_ping">#FFC107</color>
+    <color name="red_ping">#F44336</color>
+</resources>
