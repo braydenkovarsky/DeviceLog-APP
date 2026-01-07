@@ -38,7 +38,7 @@ class NetworkActivity : AppCompatActivity() {
         "OpenDNS 208.67.222.222" to "208.67.222.222"
     )
 
-    private val updateInterval: Long = 3000
+    private val updateInterval: Long = 3000 // 3 seconds
     private val updateRunnable = object : Runnable {
         override fun run() {
             updateConnectionInfo()
@@ -84,33 +84,53 @@ class NetworkActivity : AppCompatActivity() {
         val network = cm.activeNetwork
         val capabilities = cm.getNetworkCapabilities(network)
 
-        val connType = when {
-            capabilities == null -> "No Connection"
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> "Wi-Fi"
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> "Mobile Data"
-            else -> "Unknown"
-        }
-        tvConnectionType.text = "Connection: $connType"
+        val connType: String
+        val signalText: String
 
-        val signalText = when (connType) {
-            "Wi-Fi" -> getWifiSignal()
-            "Mobile Data" -> if (mobileSignalPercent >= 0) "$mobileSignalPercent%" else "Calculating..."
-            else -> "0%"
+        if (capabilities != null) {
+            when {
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
+                    connType = "Wi-Fi"
+                    signalText = getWifiSignalLabel()
+                }
+                capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
+                    connType = "Mobile Data"
+                    signalText = if (mobileSignalPercent >= 0) "$mobileSignalPercent%" else "Calculating..."
+                }
+                else -> {
+                    connType = "No Connection"
+                    signalText = "None"
+                }
+            }
+        } else {
+            connType = "No Connection"
+            signalText = "None"
         }
+
+        tvConnectionType.text = "Connection: $connType"
         tvSignal.text = "Signal: $signalText"
     }
 
-    private fun getWifiSignal(): String {
+    private fun getWifiSignalLabel(): String {
         return try {
             val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
             val info = wifiManager.connectionInfo
-            if (info.networkId == -1) "No Wi-Fi"
-            else {
-                val level = WifiManager.calculateSignalLevel(info.rssi, 100)
-                "$level%"
+            val rssi = info.rssi
+
+            // Replace INVALID_RSSI check (-127) for all Android versions
+            if (rssi <= -127) return "None"
+
+            // Convert RSSI to label
+            when (WifiManager.calculateSignalLevel(rssi, 5)) {
+                0 -> "Very Poor"
+                1 -> "Poor"
+                2 -> "Fair"
+                3 -> "Good"
+                4 -> "Excellent"
+                else -> "Unknown"
             }
         } catch (e: Exception) {
-            "0%"
+            "None"
         }
     }
 

@@ -71,7 +71,6 @@ class MainActivity : AppCompatActivity() {
                         .setPositiveButton("OK", null)
                         .show()
                 }
-
                 R.id.menuPrivacy -> {
                     val inflater = layoutInflater
                     val view = inflater.inflate(R.layout.dialog_privacy, null)
@@ -103,7 +102,7 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, NetworkActivity::class.java))
         }
 
-        // Start live device info updates
+        // Start live updates
         handler.post(updateRunnable)
     }
 
@@ -115,25 +114,23 @@ class MainActivity : AppCompatActivity() {
     private fun updateDeviceInfo() {
         // Battery
         val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
-        val batteryPct =
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
-                bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-            } else 0
+        val batteryPct = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+        } else 0
         tvBattery.text = "Battery: $batteryPct%"
 
-        // RAM usage
+        // RAM
         val memInfo = ActivityManager.MemoryInfo()
         val activityManager = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         activityManager.getMemoryInfo(memInfo)
         val ramUsage = ((memInfo.totalMem - memInfo.availMem).toFloat() / memInfo.totalMem * 100).roundToInt()
         tvRam.text = "RAM Usage: $ramUsage%"
 
-        // Storage usage
+        // Storage
         val stat = StatFs(Environment.getDataDirectory().path)
         val total = stat.blockCountLong * stat.blockSizeLong
         val free = stat.availableBlocksLong * stat.blockSizeLong
-        val used = total - free
-        val storageUsage = ((used.toFloat() / total) * 100).roundToInt()
+        val storageUsage = ((total - free).toFloat() / total * 100).roundToInt()
         tvStorage.text = "Storage: $storageUsage%"
 
         // Uptime
@@ -144,11 +141,11 @@ class MainActivity : AppCompatActivity() {
         tvUptime.text = "Device Uptime: ${hours}h ${minutes}m ${seconds}s"
 
         // Tips
-        val tipsBuilder = StringBuilder()
-        if (ramUsage > 70) tipsBuilder.append("Close unused apps.\n")
-        if (storageUsage > 80) tipsBuilder.append("Free up storage.\n")
-        if (batteryPct < 30) tipsBuilder.append("Charge your device.\n")
-        if (tipsBuilder.isEmpty()) tipsBuilder.append("Your device is running well!")
-        tvTips.text = "Tips:\n$tipsBuilder"
+        val tips = StringBuilder()
+        if (ramUsage > 70) tips.append("Close unused apps.\n")
+        if (storageUsage > 80) tips.append("Free up storage.\n")
+        if (batteryPct < 30) tips.append("Charge your device.\n")
+        if (tips.isEmpty()) tips.append("Your device is running well!")
+        tvTips.text = "Tips:\n$tips"
     }
 }
