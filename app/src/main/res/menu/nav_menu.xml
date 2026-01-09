@@ -11,4 +11,9 @@
         android:title="Privacy &amp; Policy"
         android:icon="@drawable/ic_privacy"/>
 
+    <item
+        android:id="@+id/menuOptimize"
+        android:title="Optimize Device"
+        android:icon="@android:drawable/ic_menu_manage"/>
+
 </menu>

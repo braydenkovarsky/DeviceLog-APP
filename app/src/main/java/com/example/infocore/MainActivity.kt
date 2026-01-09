@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
 
     private val handler = Handler(Looper.getMainLooper())
-    private val updateInterval: Long = 1000 // 1 second updates
+    private val updateInterval: Long = 1000 // 1-second updates
 
     private val updateRunnable = object : Runnable {
         override fun run() {
@@ -86,15 +86,15 @@ class MainActivity : AppCompatActivity() {
                     val view = layoutInflater.inflate(R.layout.dialog_privacy, null)
                     val tvContent = view.findViewById<TextView>(R.id.tvPolicyContent)
                     tvContent.text = """
-                        Privacy & Credits Policy
+                Privacy & Credits Policy
 
-                        InfoCore does NOT modify your device.
-                        Only reads stats: battery, RAM, storage, uptime.
-                        No personal data is collected or shared.
+                InfoCore does NOT modify your device.
+                Only reads stats: battery, RAM, storage, uptime.
+                No personal data is collected or shared.
 
-                        Credits:
-                        Developed by InfoCore Team.
-                    """.trimIndent()
+                Credits:
+                Developed by InfoCore Team.
+            """.trimIndent()
 
                     androidx.appcompat.app.AlertDialog.Builder(this)
                         .setTitle("Privacy & Credits")
@@ -102,12 +102,18 @@ class MainActivity : AppCompatActivity() {
                         .setPositiveButton("OK", null)
                         .show()
                 }
+
+                R.id.menuOptimize -> {
+                    // Launch OptimizeActivity
+                    startActivity(Intent(this, OptimizeActivity::class.java))
+                }
             }
 
-            // Close drawer AFTER handling click
+            // Close drawer after click
             drawerLayout.closeDrawers()
-            true // important: consume the click
+            true
         }
+
 
         // Button to open NetworkActivity
         btnOpenNetwork.setOnClickListener {
@@ -127,7 +133,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateDeviceInfo() {
-        // Battery
+        // Battery percentage only
         val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
         val batteryPct = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
         tvBattery.text = "$batteryPct%"
