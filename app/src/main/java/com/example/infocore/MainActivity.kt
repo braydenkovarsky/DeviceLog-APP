@@ -34,7 +34,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var prefs: SharedPreferences
 
     private val handler = Handler(Looper.getMainLooper())
-    private val updateInterval: Long = 1000
+    private val updateInterval: Long = 1000 // 1 second updates
 
     private val updateRunnable = object : Runnable {
         override fun run() {
@@ -62,15 +62,62 @@ class MainActivity : AppCompatActivity() {
 
         btnOpenNetwork = findViewById(R.id.btnOpenNetwork)
 
+        // Drawer toggle
         topAppBar.setNavigationOnClickListener {
             drawerLayout.openDrawer(navView)
         }
 
+        // Navigation drawer items
+        navView.setNavigationItemSelectedListener { item ->
+            when (item.itemId) {
+                R.id.menuInfo -> {
+                    androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("About / Credits")
+                        .setMessage(
+                            "InfoCore is a professional device monitoring application.\n" +
+                                    "It provides device information such as battery, RAM, storage, and uptime.\n" +
+                                    "All operations are read-only and do not modify your device."
+                        )
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+
+                R.id.menuPrivacy -> {
+                    val view = layoutInflater.inflate(R.layout.dialog_privacy, null)
+                    val tvContent = view.findViewById<TextView>(R.id.tvPolicyContent)
+                    tvContent.text = """
+                        Privacy & Credits Policy
+
+                        InfoCore does NOT modify your device.
+                        Only reads stats: battery, RAM, storage, uptime.
+                        No personal data is collected or shared.
+
+                        Credits:
+                        Developed by InfoCore Team.
+                    """.trimIndent()
+
+                    androidx.appcompat.app.AlertDialog.Builder(this)
+                        .setTitle("Privacy & Credits")
+                        .setView(view)
+                        .setPositiveButton("OK", null)
+                        .show()
+                }
+            }
+
+            // Close drawer AFTER handling click
+            drawerLayout.closeDrawers()
+            true // important: consume the click
+        }
+
+        // Button to open NetworkActivity
         btnOpenNetwork.setOnClickListener {
             startActivity(Intent(this, NetworkActivity::class.java))
         }
 
+        // Populate footer device info
         populateFooterInfo()
+
+        // Start 1-second updates
         handler.post(updateRunnable)
     }
 
@@ -80,10 +127,12 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateDeviceInfo() {
+        // Battery
         val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
         val batteryPct = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
         tvBattery.text = "$batteryPct%"
 
+        // RAM
         val memInfo = ActivityManager.MemoryInfo()
         val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
         am.getMemoryInfo(memInfo)
@@ -91,6 +140,7 @@ class MainActivity : AppCompatActivity() {
             ((memInfo.totalMem - memInfo.availMem).toFloat() / memInfo.totalMem * 100).roundToInt()
         tvRam.text = "$ramUsage%"
 
+        // Storage
         val stat = StatFs(Environment.getDataDirectory().path)
         val total = stat.blockCountLong * stat.blockSizeLong
         val free = stat.availableBlocksLong * stat.blockSizeLong
@@ -98,12 +148,14 @@ class MainActivity : AppCompatActivity() {
             ((total - free).toFloat() / total * 100).roundToInt()
         tvStorage.text = "$storageUsage%"
 
+        // Uptime
         val uptimeMillis = SystemClock.elapsedRealtime()
         val h = uptimeMillis / 1000 / 3600
         val m = uptimeMillis / 1000 / 60 % 60
         val s = uptimeMillis / 1000 % 60
         tvUptime.text = "${h}h ${m}m ${s}s"
 
+        // Tips
         val tips = StringBuilder()
         if (ramUsage > 70) tips.append("Close unused apps.\n")
         if (storageUsage > 80) tips.append("Free up storage.\n")
@@ -131,10 +183,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    /**
-     * ONLINE DEVICE DATABASE LOOKUP
-     * Uses GSMArena-style open dataset mirror
-     */
     private fun fetchDeviceNameOnline(callback: (String) -> Unit) {
         thread {
             try {
