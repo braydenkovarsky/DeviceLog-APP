@@ -37,49 +37,99 @@
             android:layout_marginTop="16dp"
             android:layout_marginBottom="16dp">
 
-            <TextView
-                android:id="@+id/tvBattery"
-                android:layout_width="wrap_content"
+            <!-- Row: Battery + RAM -->
+            <LinearLayout
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="Battery: --%"
-                android:textSize="18sp"
-                android:textColor="@color/text_primary"
-                android:textStyle="bold"/>
+                android:orientation="horizontal"
+                android:weightSum="2"
+                android:layout_marginBottom="12dp">
 
-            <TextView
-                android:id="@+id/tvRam"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="RAM Usage: --%"
-                android:textSize="18sp"
-                android:textColor="@color/text_primary"
-                android:layout_marginTop="4dp"/>
+                <!-- Battery Box -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:background="@android:color/white"
+                    android:layout_marginEnd="8dp">
 
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Battery"
+                        android:textSize="14sp"
+                        android:textColor="@android:color/darker_gray"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/tvBattery"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--%"
+                        android:textSize="22sp"
+                        android:textColor="@android:color/black"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+
+                <!-- RAM Box -->
+                <LinearLayout
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:orientation="vertical"
+                    android:padding="12dp"
+                    android:background="@android:color/white"
+                    android:layout_marginStart="8dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="RAM Usage"
+                        android:textSize="14sp"
+                        android:textColor="@android:color/darker_gray"
+                        android:textStyle="bold"/>
+
+                    <TextView
+                        android:id="@+id/tvRam"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="--%"
+                        android:textSize="22sp"
+                        android:textColor="@android:color/black"
+                        android:textStyle="bold"/>
+                </LinearLayout>
+            </LinearLayout>
+
+            <!-- Storage -->
             <TextView
                 android:id="@+id/tvStorage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Storage: --%"
                 android:textSize="18sp"
-                android:textColor="@color/text_primary"
+                android:textColor="@android:color/black"
                 android:layout_marginTop="4dp"/>
 
+            <!-- Uptime -->
             <TextView
                 android:id="@+id/tvUptime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Uptime: --"
                 android:textSize="18sp"
-                android:textColor="@color/text_primary"
+                android:textColor="@android:color/black"
                 android:layout_marginTop="4dp"/>
 
+            <!-- Tips -->
             <TextView
                 android:id="@+id/tvTips"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Tips will appear here"
                 android:textSize="16sp"
-                android:textColor="@color/text_secondary"
+                android:textColor="@android:color/darker_gray"
                 android:layout_marginTop="8dp"/>
         </LinearLayout>
 
