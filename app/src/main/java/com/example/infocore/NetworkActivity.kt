@@ -31,7 +31,6 @@ class NetworkActivity : AppCompatActivity() {
     private val executor = Executors.newSingleThreadExecutor()
     private var mobileSignalPercent: Int = -1
 
-    // Only reliable, pingable servers
     private val dnsServers = listOf(
         "Google 8.8.8.8" to "8.8.8.8",
         "Google 8.8.4.4" to "8.8.4.4",
@@ -87,48 +86,25 @@ class NetworkActivity : AppCompatActivity() {
         tvPingResult = findViewById(R.id.tvPingResult)
         tvLastPingTime = findViewById(R.id.tvLastPingTime)
         progressPing = findViewById(R.id.progressPing)
-
-        // Custom section for user input
         etCustomServer = findViewById(R.id.etCustomServer)
         btnPingCustom = findViewById(R.id.btnPingCustom)
 
         setupMobileSignalListener()
         handler.post(updateRunnable)
 
-        // Spinner adapter: first item black, others gray; dropdown always white
         val serverNames = dnsServers.map { it.first }
-        val adapter = object : ArrayAdapter<String>(
-            this,
-            android.R.layout.simple_spinner_item,
-            serverNames
-        ) {
-            override fun getView(position: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
-                val view = super.getView(position, convertView, parent) as TextView
-                if (position == spinnerServers.selectedItemPosition) {
-                    view.setTextColor(getColor(android.R.color.black))
-                } else {
-                    view.setTextColor(getColor(android.R.color.darker_gray))
-                }
-                return view
-            }
 
-            override fun getDropDownView(position: Int, convertView: android.view.View?, parent: android.view.ViewGroup): android.view.View {
-                val view = super.getDropDownView(position, convertView, parent) as TextView
-                view.setTextColor(getColor(android.R.color.white))
-                return view
-            }
+        // Spinner adapter with black background and white text, works on all themes
+        spinnerServers.adapter = ArrayAdapter(this, R.layout.spinner_item, serverNames).apply {
+            setDropDownViewResource(R.layout.spinner_dropdown_item)
         }
-        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
-        spinnerServers.adapter = adapter
 
-        // Run ping for selected server
         btnRunPing.setOnClickListener {
             val selectedIndex = spinnerServers.selectedItemPosition
             val serverIp = dnsServers[selectedIndex].second
             runPing(serverIp)
         }
 
-        // Run ping for custom IP/DNS
         btnPingCustom.setOnClickListener {
             val serverIp = etCustomServer.text.toString().trim()
             if (serverIp.isNotEmpty()) {
