@@ -3,12 +3,17 @@ package com.example.infocore
 import android.app.ActivityManager
 import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.os.*
 import android.widget.Button
+import android.widget.ImageView
+import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.drawerlayout.widget.DrawerLayout
+import com.bumptech.glide.Glide
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONObject
@@ -19,23 +24,26 @@ import kotlin.math.roundToInt
 
 class MainActivity : AppCompatActivity() {
 
+    // UI Components
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var topAppBar: MaterialToolbar
-
     private lateinit var tvBattery: TextView
     private lateinit var tvStorage: TextView
     private lateinit var tvRam: TextView
     private lateinit var tvUptime: TextView
     private lateinit var tvTips: TextView
     private lateinit var tvFooterInfo: TextView
-
     private lateinit var btnOpenNetwork: Button
+
+    // Charging indicator
+    private lateinit var layoutCharging: LinearLayout
+    private lateinit var imgCharging: ImageView
+    private lateinit var tvChargingStatus: TextView
+
     private lateinit var prefs: SharedPreferences
-
     private val handler = Handler(Looper.getMainLooper())
-    private val updateInterval: Long = 1000 // 1-second updates
-
+    private val updateInterval = 1000L
     private val updateRunnable = object : Runnable {
         override fun run() {
             updateDeviceInfo()
@@ -49,81 +57,35 @@ class MainActivity : AppCompatActivity() {
 
         prefs = getSharedPreferences("device_cache", MODE_PRIVATE)
 
+        // Initialize UI components
         drawerLayout = findViewById(R.id.drawerLayout)
         navView = findViewById(R.id.navigationView)
         topAppBar = findViewById(R.id.topAppBar)
-
         tvBattery = findViewById(R.id.tvBattery)
         tvStorage = findViewById(R.id.tvStorage)
         tvRam = findViewById(R.id.tvRam)
         tvUptime = findViewById(R.id.tvUptime)
         tvTips = findViewById(R.id.tvTips)
         tvFooterInfo = findViewById(R.id.tvFooterInfo)
-
         btnOpenNetwork = findViewById(R.id.btnOpenNetwork)
 
-        // Drawer toggle
-        topAppBar.setNavigationOnClickListener {
-            drawerLayout.openDrawer(navView)
-        }
+        // Charging indicator
+        layoutCharging = findViewById(R.id.layoutCharging)
+        imgCharging = findViewById(R.id.imgCharging)
+        tvChargingStatus = findViewById(R.id.tvChargingStatus)
 
-        // Navigation drawer items
-        navView.setNavigationItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.menuInfo -> {
-                    androidx.appcompat.app.AlertDialog.Builder(this)
-                        .setTitle("About / Credits")
-                        .setMessage(
-                            "InfoCore is a professional device monitoring application.\n" +
-                                    "It provides device information such as battery, RAM, storage, and uptime.\n" +
-                                    "All operations are read-only and do not modify your device."
-                        )
-                        .setPositiveButton("OK", null)
-                        .show()
-                }
+        // Load GIF with Glide
+        Glide.with(this)
+            .asGif()
+            .load(R.raw.icons8_charging_battery) // Use your renamed GIF here
+            .into(imgCharging)
 
-                R.id.menuPrivacy -> {
-                    val view = layoutInflater.inflate(R.layout.dialog_privacy, null)
-                    val tvContent = view.findViewById<TextView>(R.id.tvPolicyContent)
-                    tvContent.text = """
-                Privacy & Credits Policy
+        // Listeners
+        topAppBar.setNavigationOnClickListener { drawerLayout.openDrawer(navView) }
+        btnOpenNetwork.setOnClickListener { startActivity(Intent(this, NetworkActivity::class.java)) }
+        navView.setNavigationItemSelectedListener { handleNavItemSelected(it.itemId); drawerLayout.closeDrawers(); true }
 
-                InfoCore does NOT modify your device.
-                Only reads stats: battery, RAM, storage, uptime.
-                No personal data is collected or shared.
-
-                Credits:
-                Developed by InfoCore Team.
-            """.trimIndent()
-
-                    androidx.appcompat.app.AlertDialog.Builder(this)
-                        .setTitle("Privacy & Credits")
-                        .setView(view)
-                        .setPositiveButton("OK", null)
-                        .show()
-                }
-
-                R.id.menuOptimize -> {
-                    // Launch OptimizeActivity
-                    startActivity(Intent(this, OptimizeActivity::class.java))
-                }
-            }
-
-            // Close drawer after click
-            drawerLayout.closeDrawers()
-            true
-        }
-
-
-        // Button to open NetworkActivity
-        btnOpenNetwork.setOnClickListener {
-            startActivity(Intent(this, NetworkActivity::class.java))
-        }
-
-        // Populate footer device info
         populateFooterInfo()
-
-        // Start 1-second updates
         handler.post(updateRunnable)
     }
 
@@ -132,90 +94,118 @@ class MainActivity : AppCompatActivity() {
         handler.removeCallbacks(updateRunnable)
     }
 
-    private fun updateDeviceInfo() {
-        // Battery percentage only
-        val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
-        val batteryPct = bm.getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
-        tvBattery.text = "$batteryPct%"
-
-        // RAM
-        val memInfo = ActivityManager.MemoryInfo()
-        val am = getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager
-        am.getMemoryInfo(memInfo)
-        val ramUsage =
-            ((memInfo.totalMem - memInfo.availMem).toFloat() / memInfo.totalMem * 100).roundToInt()
-        tvRam.text = "$ramUsage%"
-
-        // Storage
-        val stat = StatFs(Environment.getDataDirectory().path)
-        val total = stat.blockCountLong * stat.blockSizeLong
-        val free = stat.availableBlocksLong * stat.blockSizeLong
-        val storageUsage =
-            ((total - free).toFloat() / total * 100).roundToInt()
-        tvStorage.text = "$storageUsage%"
-
-        // Uptime
-        val uptimeMillis = SystemClock.elapsedRealtime()
-        val h = uptimeMillis / 1000 / 3600
-        val m = uptimeMillis / 1000 / 60 % 60
-        val s = uptimeMillis / 1000 % 60
-        tvUptime.text = "${h}h ${m}m ${s}s"
-
-        // Tips
-        val tips = StringBuilder()
-        if (ramUsage > 70) tips.append("Close unused apps.\n")
-        if (storageUsage > 80) tips.append("Free up storage.\n")
-        if (batteryPct < 30) tips.append("Charge your device.\n")
-        if (tips.isEmpty()) tips.append("Your device is running well!")
-        tvTips.text = tips.toString()
+    // ==================== NAVIGATION DRAWER ====================
+    private fun handleNavItemSelected(itemId: Int) = when (itemId) {
+        R.id.menuInfo -> showAlert("About / Credits",
+            "InfoCore is a professional device monitoring application.\n" +
+                    "It provides device information such as battery, RAM, storage, and uptime.\n" +
+                    "All operations are read-only and do not modify your device.")
+        R.id.menuPrivacy -> showPrivacyDialog()
+        R.id.menuOptimize -> startActivity(Intent(this, OptimizeActivity::class.java))
+        else -> {}
     }
 
-    private fun populateFooterInfo() {
-        val cached = prefs.getString("device_name", null)
-        val androidVersion = Build.VERSION.RELEASE
+    private fun showAlert(title: String, message: String) =
+        AlertDialog.Builder(this).setTitle(title).setMessage(message).setPositiveButton("OK", null).show()
 
-        if (cached != null) {
-            tvFooterInfo.text = "InfoCore • Android $androidVersion • $cached"
+    private fun showPrivacyDialog() {
+        val view = layoutInflater.inflate(R.layout.dialog_privacy, null)
+        view.findViewById<TextView>(R.id.tvPolicyContent).text = """
+            Privacy & Credits Policy
+
+            InfoCore does NOT modify your device.
+            Only reads stats: battery, RAM, storage, uptime.
+            No personal data is collected or shared.
+
+            Credits:
+            Developed by InfoCore Team.
+        """.trimIndent()
+        AlertDialog.Builder(this).setTitle("Privacy & Credits").setView(view).setPositiveButton("OK", null).show()
+    }
+
+    // ==================== FOOTER INFO ====================
+    private fun populateFooterInfo() {
+        val androidVersion = Build.VERSION.RELEASE
+        prefs.getString("device_name", null)?.let {
+            tvFooterInfo.text = "InfoCore • Android $androidVersion • $it"
             return
         }
 
         tvFooterInfo.text = "InfoCore • Android $androidVersion • Detecting device…"
-
         fetchDeviceNameOnline { name ->
             prefs.edit().putString("device_name", name).apply()
-            runOnUiThread {
-                tvFooterInfo.text = "InfoCore • Android $androidVersion • $name"
-            }
+            runOnUiThread { tvFooterInfo.text = "InfoCore • Android $androidVersion • $name" }
         }
     }
 
-    private fun fetchDeviceNameOnline(callback: (String) -> Unit) {
-        thread {
-            try {
-                val model = Build.MODEL
-                val manufacturer = Build.MANUFACTURER
+    private fun fetchDeviceNameOnline(callback: (String) -> Unit) = thread {
+        try {
+            val url = URL("https://raw.githubusercontent.com/androidtrackers/certified-android-devices/master/by_model.json")
+            val conn = url.openConnection() as HttpURLConnection
+            conn.connectTimeout = 5000; conn.readTimeout = 5000
+            val json = conn.inputStream.bufferedReader().use { it.readText() }
+            val root = JSONObject(json)
+            val name = if (root.has(Build.MODEL)) root.getJSONArray(Build.MODEL).getJSONObject(0).getString("name")
+            else "${Build.MANUFACTURER} ${Build.MODEL}"
+            callback(name)
+        } catch (_: Exception) { callback("${Build.MANUFACTURER} ${Build.MODEL}") }
+    }
 
-                val url = URL(
-                    "https://raw.githubusercontent.com/androidtrackers/certified-android-devices/master/by_model.json"
-                )
+    // ==================== DEVICE INFO LOGIC ====================
+    private fun updateDeviceInfo() {
+        val battery = getBatteryPercentage()
+        val ram = getRamUsage()
+        val storage = getStorageUsage()
+        tvBattery.text = "$battery%"
+        tvRam.text = "$ram%"
+        tvStorage.text = "$storage%"
+        tvUptime.text = getUptime()
+        tvTips.text = generateTips(ram, storage, battery)
 
-                val conn = url.openConnection() as HttpURLConnection
-                conn.connectTimeout = 5000
-                conn.readTimeout = 5000
+        // Update charging indicator
+        updateChargingStatus()
+    }
 
-                val json = conn.inputStream.bufferedReader().use { it.readText() }
-                val root = JSONObject(json)
+    private fun updateChargingStatus() {
+        val batteryIntent = registerReceiver(
+            null,
+            IntentFilter(Intent.ACTION_BATTERY_CHANGED)
+        )
+        val status = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+        val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
+                status == BatteryManager.BATTERY_STATUS_FULL
 
-                if (root.has(model)) {
-                    val arr = root.getJSONArray(model)
-                    val obj = arr.getJSONObject(0)
-                    callback(obj.getString("name"))
-                } else {
-                    callback("$manufacturer $model")
-                }
-            } catch (e: Exception) {
-                callback("${Build.MANUFACTURER} ${Build.MODEL}")
-            }
-        }
+        layoutCharging.visibility = if (isCharging) android.view.View.VISIBLE else android.view.View.GONE
+    }
+
+    private fun getBatteryPercentage() = (getSystemService(BATTERY_SERVICE) as BatteryManager)
+        .getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
+
+    private fun getRamUsage(): Int {
+        val mem = ActivityManager.MemoryInfo()
+        (getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(mem)
+        return ((mem.totalMem - mem.availMem).toFloat() / mem.totalMem * 100).roundToInt()
+    }
+
+    private fun getStorageUsage(): Int {
+        val stat = StatFs(Environment.getDataDirectory().path)
+        val total = stat.blockCountLong * stat.blockSizeLong
+        val free = stat.availableBlocksLong * stat.blockSizeLong
+        return ((total - free).toFloat() / total * 100).roundToInt()
+    }
+
+    private fun getUptime(): String {
+        val uptime = SystemClock.elapsedRealtime()
+        val h = uptime / 1000 / 3600
+        val m = uptime / 1000 / 60 % 60
+        val s = uptime / 1000 % 60
+        return "${h}h ${m}m ${s}s"
+    }
+
+    private fun generateTips(ram: Int, storage: Int, battery: Int) = buildString {
+        if (ram > 70) append("Close unused apps.\n")
+        if (storage > 80) append("Free up storage.\n")
+        if (battery < 30) append("Charge your device.\n")
+        if (isEmpty()) append("Your device is running well!")
     }
 }
