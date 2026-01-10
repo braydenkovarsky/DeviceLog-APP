@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.IntentFilter
 import android.content.SharedPreferences
 import android.os.*
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -74,16 +75,14 @@ class MainActivity : AppCompatActivity() {
         imgCharging = findViewById(R.id.imgCharging)
         tvChargingStatus = findViewById(R.id.tvChargingStatus)
 
-        // Load GIF with Glide
-        Glide.with(this)
-            .asGif()
-            .load(R.raw.icons8_charging_battery) // Use your renamed GIF here
-            .into(imgCharging)
-
         // Listeners
         topAppBar.setNavigationOnClickListener { drawerLayout.openDrawer(navView) }
         btnOpenNetwork.setOnClickListener { startActivity(Intent(this, NetworkActivity::class.java)) }
-        navView.setNavigationItemSelectedListener { handleNavItemSelected(it.itemId); drawerLayout.closeDrawers(); true }
+        navView.setNavigationItemSelectedListener {
+            handleNavItemSelected(it.itemId)
+            drawerLayout.closeDrawers()
+            true
+        }
 
         populateFooterInfo()
         handler.post(updateRunnable)
@@ -96,10 +95,12 @@ class MainActivity : AppCompatActivity() {
 
     // ==================== NAVIGATION DRAWER ====================
     private fun handleNavItemSelected(itemId: Int) = when (itemId) {
-        R.id.menuInfo -> showAlert("About / Credits",
+        R.id.menuInfo -> showAlert(
+            "About / Credits",
             "InfoCore is a professional device monitoring application.\n" +
                     "It provides device information such as battery, RAM, storage, and uptime.\n" +
-                    "All operations are read-only and do not modify your device.")
+                    "All operations are read-only and do not modify your device."
+        )
         R.id.menuPrivacy -> showPrivacyDialog()
         R.id.menuOptimize -> startActivity(Intent(this, OptimizeActivity::class.java))
         else -> {}
@@ -120,7 +121,11 @@ class MainActivity : AppCompatActivity() {
             Credits:
             Developed by InfoCore Team.
         """.trimIndent()
-        AlertDialog.Builder(this).setTitle("Privacy & Credits").setView(view).setPositiveButton("OK", null).show()
+        AlertDialog.Builder(this)
+            .setTitle("Privacy & Credits")
+            .setView(view)
+            .setPositiveButton("OK", null)
+            .show()
     }
 
     // ==================== FOOTER INFO ====================
@@ -145,10 +150,13 @@ class MainActivity : AppCompatActivity() {
             conn.connectTimeout = 5000; conn.readTimeout = 5000
             val json = conn.inputStream.bufferedReader().use { it.readText() }
             val root = JSONObject(json)
-            val name = if (root.has(Build.MODEL)) root.getJSONArray(Build.MODEL).getJSONObject(0).getString("name")
+            val name = if (root.has(Build.MODEL)) root.getJSONArray(Build.MODEL)
+                .getJSONObject(0).getString("name")
             else "${Build.MANUFACTURER} ${Build.MODEL}"
             callback(name)
-        } catch (_: Exception) { callback("${Build.MANUFACTURER} ${Build.MODEL}") }
+        } catch (_: Exception) {
+            callback("${Build.MANUFACTURER} ${Build.MODEL}")
+        }
     }
 
     // ==================== DEVICE INFO LOGIC ====================
@@ -167,16 +175,31 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateChargingStatus() {
-        val batteryIntent = registerReceiver(
-            null,
-            IntentFilter(Intent.ACTION_BATTERY_CHANGED)
-        )
+        val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
         val status = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
         val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
                 status == BatteryManager.BATTERY_STATUS_FULL
 
-        layoutCharging.visibility = if (isCharging) android.view.View.VISIBLE else android.view.View.GONE
+        layoutCharging.visibility = View.VISIBLE
+
+        if (isCharging) {
+            tvChargingStatus.text = "Device is charging"
+            tvChargingStatus.setTextColor(resources.getColor(android.R.color.holo_green_light, theme))
+            // Load GIF
+            Glide.with(this)
+                .asGif()
+                .load(R.raw.charging) // res/raw/charging.gif
+                .into(imgCharging)
+        } else {
+            tvChargingStatus.text = "Device is not charging"
+            tvChargingStatus.setTextColor(resources.getColor(android.R.color.black, theme))
+            // Load static PNG
+            Glide.with(this)
+                .load(R.drawable.ic_favicon) // res/drawable/ic_favicon.png
+                .into(imgCharging)
+        }
     }
+
 
     private fun getBatteryPercentage() = (getSystemService(BATTERY_SERVICE) as BatteryManager)
         .getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
