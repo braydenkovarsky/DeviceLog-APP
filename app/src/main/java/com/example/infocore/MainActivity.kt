@@ -42,12 +42,25 @@ class MainActivity : AppCompatActivity() {
     private lateinit var imgCharging: ImageView
     private lateinit var tvChargingStatus: TextView
 
+    // Device Health Insights
+    private lateinit var tvTemperature: TextView
+    private lateinit var tvBatteryHealth: TextView
+    private lateinit var tvDeviceHealthStatus: TextView
+    private lateinit var tvPerformanceTips: TextView
+
     private lateinit var prefs: SharedPreferences
     private val handler = Handler(Looper.getMainLooper())
     private val updateInterval = 1000L
+    private var healthCounter = 0L // For 5-second updates
+
     private val updateRunnable = object : Runnable {
         override fun run() {
             updateDeviceInfo()
+            healthCounter += updateInterval
+            if (healthCounter >= 5000L) {
+                updateDeviceHealth()
+                healthCounter = 0L
+            }
             handler.postDelayed(this, updateInterval)
         }
     }
@@ -70,10 +83,14 @@ class MainActivity : AppCompatActivity() {
         tvFooterInfo = findViewById(R.id.tvFooterInfo)
         btnOpenNetwork = findViewById(R.id.btnOpenNetwork)
 
-        // Charging indicator
         layoutCharging = findViewById(R.id.layoutCharging)
         imgCharging = findViewById(R.id.imgCharging)
         tvChargingStatus = findViewById(R.id.tvChargingStatus)
+
+        tvTemperature = findViewById(R.id.tvTemperature)
+        tvBatteryHealth = findViewById(R.id.tvBatteryHealth)
+        tvDeviceHealthStatus = findViewById(R.id.tvDeviceHealthStatus)
+        tvPerformanceTips = findViewById(R.id.tvPerformanceTips)
 
         // Listeners
         topAppBar.setNavigationOnClickListener { drawerLayout.openDrawer(navView) }
@@ -159,7 +176,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // ==================== DEVICE INFO LOGIC ====================
+    // ==================== DEVICE INFO ====================
     private fun updateDeviceInfo() {
         val battery = getBatteryPercentage()
         val ram = getRamUsage()
@@ -169,8 +186,6 @@ class MainActivity : AppCompatActivity() {
         tvStorage.text = "$storage%"
         tvUptime.text = getUptime()
         tvTips.text = generateTips(ram, storage, battery)
-
-        // Update charging indicator
         updateChargingStatus()
     }
 
@@ -185,21 +200,63 @@ class MainActivity : AppCompatActivity() {
         if (isCharging) {
             tvChargingStatus.text = "Device is charging"
             tvChargingStatus.setTextColor(resources.getColor(android.R.color.holo_green_light, theme))
-            // Load GIF
-            Glide.with(this)
-                .asGif()
-                .load(R.raw.charging) // res/raw/charging.gif
-                .into(imgCharging)
+            Glide.with(this).asGif().load(R.raw.charging).into(imgCharging)
         } else {
             tvChargingStatus.text = "Device is not charging"
             tvChargingStatus.setTextColor(resources.getColor(android.R.color.black, theme))
-            // Load static PNG
-            Glide.with(this)
-                .load(R.drawable.ic_favicon) // res/drawable/ic_favicon.png
-                .into(imgCharging)
+            Glide.with(this).load(R.drawable.ic_favicon).into(imgCharging)
         }
     }
 
+    // ==================== DEVICE HEALTH ====================
+    private fun updateDeviceHealth() {
+        val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
+
+        // Temperature
+        val temp = batteryIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
+        tvTemperature.text = "Temperature: ${temp / 10.0}°C"
+
+        // Battery Health
+        val healthStatus = batteryIntent?.getIntExtra(BatteryManager.EXTRA_HEALTH, 0) ?: 0
+        val healthPercent = when (healthStatus) {
+            BatteryManager.BATTERY_HEALTH_GOOD -> 100
+            BatteryManager.BATTERY_HEALTH_OVERHEAT -> 80
+            BatteryManager.BATTERY_HEALTH_DEAD -> 0
+            BatteryManager.BATTERY_HEALTH_OVER_VOLTAGE -> 90
+            BatteryManager.BATTERY_HEALTH_COLD -> 80
+            else -> 75
+        }
+        tvBatteryHealth.text = "Battery Health: $healthPercent%"
+
+        // Device Health Score
+        val batteryLevel = getBatteryPercentage()
+        val ramUsage = getRamUsage()
+        val storageUsage = getStorageUsage()
+
+        val issues = mutableListOf<String>()
+
+        if (batteryLevel < 30 || healthPercent < 80) issues.add("Battery attention needed")
+        if (ramUsage > 75) issues.add("Close unused apps")
+        if (storageUsage > 85) issues.add("Free up storage")
+
+        when {
+            issues.isEmpty() -> {
+                tvDeviceHealthStatus.text = "Device Health: Excellent"
+                tvDeviceHealthStatus.setTextColor(resources.getColor(android.R.color.holo_green_dark, theme))
+                tvPerformanceTips.text = "No immediate action required."
+            }
+            issues.size <= 2 -> {
+                tvDeviceHealthStatus.text = "Device Health: Moderate"
+                tvDeviceHealthStatus.setTextColor(resources.getColor(android.R.color.holo_orange_dark, theme))
+                tvPerformanceTips.text = issues.joinToString("\n")
+            }
+            else -> {
+                tvDeviceHealthStatus.text = "Device Health: Needs Attention"
+                tvDeviceHealthStatus.setTextColor(resources.getColor(android.R.color.holo_red_dark, theme))
+                tvPerformanceTips.text = issues.joinToString("\n")
+            }
+        }
+    }
 
     private fun getBatteryPercentage() = (getSystemService(BATTERY_SERVICE) as BatteryManager)
         .getIntProperty(BatteryManager.BATTERY_PROPERTY_CAPACITY)
