@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.Uri
 import android.net.wifi.WifiManager
 import android.os.*
 import android.provider.Settings
@@ -13,6 +14,7 @@ import android.telephony.TelephonyManager
 import android.widget.*
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 import java.net.InetAddress
 import java.text.SimpleDateFormat
 import java.util.*
@@ -23,8 +25,7 @@ import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
 import android.text.style.ForegroundColorSpan
-import androidx.core.content.ContextCompat
-import android.net.Uri
+import android.os.Build
 
 class NetworkActivity : AppCompatActivity() {
 
@@ -46,9 +47,9 @@ class NetworkActivity : AppCompatActivity() {
     private val executor = Executors.newSingleThreadExecutor()
     private var mobileSignalPercent: Int = -1
     private val pingHistory = mutableListOf<String>()
+    private val pingValues = mutableListOf<Long>() // For average ping calculation
 
-    private var isNoConnectionDialogShown = false
-    private var noConnectionPopupCount = 0
+    private var noConnectionDialog: AlertDialog? = null
 
     private val dnsServers = listOf(
         "Google 8.8.8.8" to "8.8.8.8",
@@ -58,7 +59,7 @@ class NetworkActivity : AppCompatActivity() {
         "Quad9 9.9.9.9" to "9.9.9.9"
     )
 
-    private val updateInterval: Long = 3000
+    private val updateInterval: Long = 1000 // 1 second
     private val updateRunnable = object : Runnable {
         override fun run() {
             updateConnectionInfo()
@@ -104,14 +105,13 @@ class NetworkActivity : AppCompatActivity() {
             else Toast.makeText(this, "Enter a valid IP or DNS", Toast.LENGTH_SHORT).show()
         }
 
-        // Save history
         btnSaveHistory.setOnClickListener {
             saveHistoryToFile()
         }
 
-        // Clear history
         btnClearHistory.setOnClickListener {
             pingHistory.clear()
+            pingValues.clear()
             tvPingHistory.text = "No history yet"
         }
     }
@@ -129,23 +129,24 @@ class NetworkActivity : AppCompatActivity() {
 
         val connType: String
         val signalText: String
+        val isConnected = capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
 
-        if (capabilities != null) {
+        if (isConnected) {
+            noConnectionDialog?.dismiss()
+            noConnectionDialog = null
+
             when {
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) -> {
                     connType = "Wi-Fi"
                     signalText = getWifiSignalLabel()
-                    isNoConnectionDialogShown = false
                 }
                 capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) -> {
                     connType = "Mobile Data"
                     signalText = if (mobileSignalPercent >= 0) "$mobileSignalPercent%" else "Calculating..."
-                    isNoConnectionDialogShown = false
                 }
                 else -> {
-                    connType = "No Connection"
-                    signalText = "None"
-                    showNoConnectionDialog()
+                    connType = "Unknown"
+                    signalText = "Unknown"
                 }
             }
         } else {
@@ -159,59 +160,19 @@ class NetworkActivity : AppCompatActivity() {
     }
 
     private fun showNoConnectionDialog() {
-        if (!isNoConnectionDialogShown) {
-            isNoConnectionDialogShown = true
-            AlertDialog.Builder(this)
+        if (noConnectionDialog == null) {
+            noConnectionDialog = AlertDialog.Builder(this)
                 .setTitle("No Connection Detected")
                 .setMessage("Your device is not connected to the internet. Would you like to open Wi-Fi settings?")
                 .setCancelable(false)
                 .setPositiveButton("Yes") { dialog, _ ->
-                    noConnectionPopupCount++
                     startActivity(Intent(Settings.ACTION_WIFI_SETTINGS))
-                    dialog.dismiss()
-                    if (noConnectionPopupCount >= 3) showWifiFixRecommendation()
                 }
                 .setNegativeButton("No") { dialog, _ -> dialog.dismiss() }
-                .show()
+                .create()
+
+            noConnectionDialog?.show()
         }
-    }
-
-    private fun showWifiFixRecommendation() {
-        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = cm.activeNetwork
-        val capabilities = cm.getNetworkCapabilities(network)
-
-        val message = when {
-            capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true -> {
-                "You are connected to Wi-Fi but still facing issues. Try:\n\n" +
-                        "• Restart your router.\n" +
-                        "• Move closer to the Wi-Fi access point.\n" +
-                        "• Forget and reconnect to your Wi-Fi network.\n" +
-                        "• Check if other devices can connect to the same network.\n" +
-                        "• Update your device software."
-            }
-            capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true -> {
-                "You are on Mobile Data but experiencing connectivity issues. Try:\n\n" +
-                        "• Toggle Airplane mode on/off.\n" +
-                        "• Ensure you have good signal coverage.\n" +
-                        "• Disable data saver or VPN apps.\n" +
-                        "• Restart your device.\n" +
-                        "• Contact your mobile provider if the problem persists."
-            }
-            else -> {
-                "Your device is currently offline. Try:\n\n" +
-                        "• Enable Wi-Fi or Mobile Data.\n" +
-                        "• Restart your router or device.\n" +
-                        "• Check for software updates.\n" +
-                        "• Reset network settings if needed."
-            }
-        }
-
-        AlertDialog.Builder(this)
-            .setTitle("Connection Recommendations")
-            .setMessage(message)
-            .setPositiveButton("OK") { dialog, _ -> dialog.dismiss() }
-            .show()
     }
 
     private fun getWifiSignalLabel(): String {
@@ -273,8 +234,8 @@ class NetworkActivity : AppCompatActivity() {
                     )
                     tvLastPingTime.text = "Last ping: $timestamp"
 
-                    val historyLine = "$timestamp - $pingText"
-                    pingHistory.add(historyLine)
+                    pingHistory.add("$timestamp - $pingText")
+                    if (ping >= 0) pingValues.add(ping)
 
                     val historyBuilder = SpannableStringBuilder()
                     pingHistory.forEach { line ->
@@ -299,6 +260,25 @@ class NetworkActivity : AppCompatActivity() {
                         historyBuilder.append("\n")
                     }
 
+                    // Average ping
+                    if (pingValues.isNotEmpty()) {
+                        val avg = pingValues.average().toInt()
+                        val avgLine = "Average Ping: $avg ms"
+                        val avgSpannable = SpannableString(avgLine)
+                        val avgColor = when {
+                            avg in 0..99 -> getColor(R.color.green_ping)
+                            avg in 100..299 -> getColor(R.color.yellow_ping)
+                            else -> getColor(R.color.red_ping)
+                        }
+                        avgSpannable.setSpan(
+                            ForegroundColorSpan(avgColor),
+                            avgLine.indexOf("$avg ms"),
+                            avgLine.indexOf("$avg ms") + "$avg ms".length,
+                            Spannable.SPAN_EXCLUSIVE_EXCLUSIVE
+                        )
+                        historyBuilder.append(avgSpannable)
+                    }
+
                     tvPingHistory.text = historyBuilder
                     scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
                 }
@@ -319,8 +299,7 @@ class NetworkActivity : AppCompatActivity() {
 
                     val historyBuilder = SpannableStringBuilder()
                     pingHistory.forEach { line ->
-                        val lineSpan = SpannableString(line)
-                        historyBuilder.append(lineSpan)
+                        historyBuilder.append(SpannableString(line))
                         historyBuilder.append("\n")
                     }
 
@@ -336,11 +315,29 @@ class NetworkActivity : AppCompatActivity() {
     }
 
     private fun saveHistoryToFile() {
+        if (pingHistory.isEmpty()) {
+            Toast.makeText(this, "No ping history to save", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = cm.activeNetwork
+        val capabilities = cm.getNetworkCapabilities(network)
+        val isConnected = capabilities != null && capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+
+        if (!isConnected) {
+            Toast.makeText(this, "Save failed: No internet connection", Toast.LENGTH_SHORT).show()
+            return
+        }
+
         try {
-            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT)
-            intent.addCategory(Intent.CATEGORY_OPENABLE)
-            intent.type = "text/plain"
-            intent.putExtra(Intent.EXTRA_TITLE, "ping_history_${System.currentTimeMillis()}.txt")
+            val date = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.getDefault()).format(Date())
+            val fileName = "PingHistory_$date.txt"
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TITLE, fileName)
+            }
             startActivityForResult(intent, 1001)
         } catch (e: Exception) {
             Toast.makeText(this, "Error opening file picker", Toast.LENGTH_SHORT).show()
@@ -353,28 +350,46 @@ class NetworkActivity : AppCompatActivity() {
             val uri: Uri? = data.data
             uri?.let {
                 contentResolver.openOutputStream(uri)?.use { stream ->
-                    // Build beautifully formatted file
-                    val dateStr = SimpleDateFormat("yyyy-MM-dd", Locale.getDefault()).format(Date())
-                    val timeStr = SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(Date())
-                    val sb = StringBuilder()
-                    sb.appendLine("========================================")
-                    sb.appendLine("           NETWORK PING HISTORY")
-                    sb.appendLine("========================================")
-                    sb.appendLine("Device: InfoCore Ping Tester")
-                    sb.appendLine("Date: $dateStr")
-                    sb.appendLine("Saved at: $timeStr")
-                    sb.appendLine("----------------------------------------")
-                    pingHistory.forEach { line -> sb.appendLine(line) }
-                    sb.appendLine("----------------------------------------")
-                    sb.appendLine("Legend:")
-                    sb.appendLine("Green = Good (0-99ms)")
-                    sb.appendLine("Yellow = Fair (100-299ms)")
-                    sb.appendLine("Red = Timeout or Poor (>299ms)")
-                    sb.appendLine("========================================")
-                    stream.write(sb.toString().toByteArray())
+                    val manufacturer = Build.MANUFACTURER.uppercase()
+                    val model = Build.MODEL
+                    val deviceName = "$manufacturer $model (${Build.DEVICE})"
+                    val timestamp = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+
+                    val builder = StringBuilder()
+                    builder.append("InfoCore Network Ping History\n")
+                    builder.append("Device: $deviceName\n")
+                    builder.append("Saved at: $timestamp\n")
+                    builder.append("--------------------------------------------------\n")
+                    builder.append("Ping History:\n")
+                    pingHistory.forEach { builder.append(it).append("\n") }
+
+                    if (pingValues.isNotEmpty()) {
+                        val avg = pingValues.average().toInt()
+                        builder.append("--------------------------------------------------\n")
+                        builder.append("Average Ping: $avg ms\n")
+                    }
+
+                    builder.append("\nLegend & Tips:\n")
+                    builder.append("• 0-99 ms → Excellent (green)\n")
+                    builder.append("• 100-299 ms → Fair (yellow)\n")
+                    builder.append("• 300+ ms or Timeout → Poor (red)\n")
+                    builder.append("\nHow to Improve Ping:\n")
+                    builder.append("• Use Wi-Fi instead of mobile data if possible.\n")
+                    builder.append("• Move closer to your router or access point.\n")
+                    builder.append("• Avoid network congestion (limit downloads/streams while gaming).\n")
+                    builder.append("• Restart your router periodically.\n")
+                    builder.append("• Use a wired connection if feasible.\n")
+                    builder.append("• Ensure device software is up-to-date.\n")
+                    builder.append("• Disable VPNs or apps that throttle network speed.\n")
+                    builder.append("\nNote: This file is optimized for readability and minimal size.\n")
+
+                    stream.write(builder.toString().toByteArray())
                     Toast.makeText(this, "History saved", Toast.LENGTH_SHORT).show()
                 }
             }
         }
     }
+
+
+
 }
