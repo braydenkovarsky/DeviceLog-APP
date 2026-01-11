@@ -1,4 +1,6 @@
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    android:id="@+id/scrollView"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/bg_light"
@@ -152,6 +154,56 @@
                 android:textColor="@color/white"
                 android:textStyle="bold"/>
         </LinearLayout>
+
+        <!-- NEW: Ping History Display -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:background="@drawable/card_bg"
+            android:padding="16dp"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="16dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Ping History"
+                android:textSize="16sp"
+                android:textColor="@color/text_primary"
+                android:textStyle="bold"
+                android:layout_marginBottom="8dp"/>
+
+            <TextView
+                android:id="@+id/tvPingHistory"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="No history yet"
+                android:textSize="14sp"
+                android:textColor="@color/text_secondary"/>
+        </LinearLayout>
+
+        <!-- Save History Button -->
+        <Button
+            android:id="@+id/btnSaveHistory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Save History"
+            android:backgroundTint="@color/btn_primary"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
+
+        <!-- NEW: Clear History Button -->
+        <Button
+            android:id="@+id/btnClearHistory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Clear History"
+            android:backgroundTint="@color/orange_bg"
+            android:textColor="@color/white"
+            android:textStyle="bold"
+            android:layout_marginBottom="16dp"/>
 
     </LinearLayout>
 </ScrollView>
