@@ -42,10 +42,5 @@
             android:name=".NetworkActivity"
             android:exported="false" />
 
-        <!-- Optimize Device Activity -->
-        <activity
-            android:name=".OptimizeActivity"
-            android:exported="false" />
-
     </application>
 </manifest>

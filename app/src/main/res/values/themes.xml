@@ -1,13 +1,19 @@
 <resources>
-
     <style name="Theme.InfoCore.Splash" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@color/btn_primary</item>
+        <item name="windowSplashScreenBackground">#0F111A</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
-        <item name="windowSplashScreenIconBackgroundColor">@color/btn_primary</item>
         <item name="postSplashScreenTheme">@style/Theme.InfoCore</item>
     </style>
 
     <style name="Theme.InfoCore" parent="Theme.Material3.DayNight.NoActionBar">
-    </style>
+        <item name="android:statusBarColor">#0F111A</item>
+        <item name="android:windowBackground">#0F111A</item>
+        <item name="android:navigationBarColor">#0F111A</item>
 
+        <item name="colorPrimary">#64FFDA</item>
+        <item name="colorOnPrimary">#0F111A</item>
+        <item name="colorSurface">#0F111A</item>
+        <item name="colorOnSurface">#FFFFFF</item>
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    </style>
 </resources>
