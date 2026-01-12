@@ -1,10 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
 <ScrollView
     android:id="@+id/scrollView"
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/bg_light"
-    android:padding="16dp">
+    android:background="#0F111A"
+    android:fillViewport="true"
+    android:padding="20dp">
 
     <LinearLayout
         android:orientation="vertical"
@@ -14,19 +17,18 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_marginTop="45dp"
+            android:layout_marginTop="24dp"
             android:text="Network Ping Tester"
             android:textSize="24sp"
-            android:textColor="@color/btn_primary"
+            android:textColor="@android:color/white"
             android:textStyle="bold"
             android:layout_marginBottom="24dp"/>
 
-        <!-- Connection Info Card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/card_bg"
+            android:background="@drawable/glass_card_selected"
             android:padding="16dp"
             android:layout_marginBottom="16dp">
 
@@ -34,27 +36,26 @@
                 android:id="@+id/tvConnectionType"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Connection: "
+                android:text="Connection: WIFI"
                 android:textSize="18sp"
-                android:textColor="@color/text_primary"
+                android:textColor="#64FFDA"
                 android:textStyle="bold"/>
 
             <TextView
                 android:id="@+id/tvSignal"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Signal: "
-                android:textSize="16sp"
-                android:textColor="@color/text_secondary"
+                android:text="Signal: Excellent"
+                android:textSize="14sp"
+                android:textColor="#B0BEC5"
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
-        <!-- Server Selector -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/card_bg"
+            android:background="@drawable/glass_card_simple"
             android:padding="16dp"
             android:layout_marginBottom="16dp">
 
@@ -62,148 +63,153 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Select Server:"
-                android:textSize="16sp"
-                android:textColor="@color/text_secondary"
+                android:textSize="12sp"
+                android:textAllCaps="true"
+                android:textColor="#B0BEC5"
                 android:layout_marginBottom="8dp"/>
 
             <Spinner
                 android:id="@+id/spinnerServers"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:padding="8dp"/>
+                android:padding="8dp"
+                android:backgroundTint="@android:color/white"/>
         </LinearLayout>
 
-        <!-- Run Ping Button -->
-        <Button
+        <com.google.android.material.button.MaterialButton
             android:id="@+id/btnRunPing"
+            style="@style/Widget.MaterialComponents.Button.OutlinedButton"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Run Ping"
-            android:backgroundTint="@color/btn_primary"
-            android:textColor="@color/white"
-            android:textStyle="bold"
+            android:layout_height="56dp"
+            android:text="Run Ping Test"
+            app:strokeColor="#4DD8FF"
+            app:strokeWidth="1dp"
+            android:textColor="#4DD8FF"
+            app:cornerRadius="28dp"
             android:layout_marginBottom="16dp"/>
 
-        <!-- Progress Bar -->
         <ProgressBar
             android:id="@+id/progressPing"
             android:layout_width="match_parent"
-            android:layout_height="8dp"
+            android:layout_height="4dp"
             android:indeterminate="true"
             android:visibility="gone"
             style="?android:attr/progressBarStyleHorizontal"
-            android:progressTint="@color/btn_primary"
+            android:progressTint="#64FFDA"
             android:layout_marginBottom="16dp"/>
 
-        <!-- Ping Result Card -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/card_bg"
+            android:background="@drawable/glass_card_selected"
             android:padding="16dp">
 
             <TextView
                 android:id="@+id/tvPingResult"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Ping result will appear here"
-                android:textSize="18sp"
-                android:textColor="@color/text_primary"
+                android:text="Result: -- ms"
+                android:textSize="22sp"
+                android:textColor="@android:color/white"
                 android:textStyle="bold" />
 
             <TextView
                 android:id="@+id/tvLastPingTime"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:text="Last ping: N/A"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"
+                android:text="Status: Waiting..."
+                android:textSize="12sp"
+                android:textColor="#B0BEC5"
                 android:layout_marginTop="4dp"/>
         </LinearLayout>
 
-        <!-- Custom Ping Section -->
         <LinearLayout
-            android:id="@+id/customPingSection"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="horizontal"
-            android:padding="8dp"
-            android:layout_marginTop="16dp">
+            android:gravity="center_vertical"
+            android:layout_marginTop="16dp"
+            android:background="@drawable/glass_card_simple"
+            android:padding="8dp">
 
             <EditText
                 android:id="@+id/etCustomServer"
                 android:layout_width="0dp"
                 android:layout_weight="1"
                 android:layout_height="wrap_content"
-                android:hint="Enter IP or DNS"
+                android:hint="IP or DNS Address"
                 android:inputType="text"
-                android:padding="8dp"
-                android:textColor="@android:color/black"
-                android:textColorHint="#80000000"
-                android:background="@android:color/transparent"
-                android:backgroundTint="@android:color/darker_gray"/>
+                android:padding="12dp"
+                android:textColor="@android:color/white"
+                android:textColorHint="#4DFFFFFF"
+                android:background="@android:color/transparent"/>
 
-            <Button
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnPingCustom"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Ping"
-                android:layout_marginStart="8dp"
-                android:backgroundTint="@color/btn_primary"
-                android:textColor="@color/white"
-                android:textStyle="bold"/>
+                app:backgroundTint="#64FFDA"
+                android:textColor="#0F111A"
+                android:textStyle="bold"
+                app:cornerRadius="8dp"
+                android:layout_marginStart="8dp"/>
         </LinearLayout>
 
-        <!-- NEW: Ping History Display -->
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            android:background="@drawable/card_bg"
+            android:background="@drawable/glass_card_simple"
             android:padding="16dp"
-            android:layout_marginTop="16dp"
-            android:layout_marginBottom="16dp">
+            android:layout_marginTop="16dp">
 
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Ping History"
-                android:textSize="16sp"
-                android:textColor="@color/text_primary"
+                android:textSize="14sp"
                 android:textStyle="bold"
+                android:textColor="@android:color/white"
                 android:layout_marginBottom="8dp"/>
 
             <TextView
                 android:id="@+id/tvPingHistory"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:text="No history yet"
-                android:textSize="14sp"
-                android:textColor="@color/text_secondary"/>
+                android:text="No history logs yet."
+                android:textSize="13sp"
+                android:textColor="#B0BEC5"/>
         </LinearLayout>
 
-        <!-- Save History Button -->
-        <Button
-            android:id="@+id/btnSaveHistory"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Save History"
-            android:backgroundTint="@color/btn_primary"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
+            android:orientation="horizontal"
+            android:layout_marginTop="16dp"
+            android:layout_marginBottom="32dp">
 
-        <!-- NEW: Clear History Button -->
-        <Button
-            android:id="@+id/btnClearHistory"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Clear History"
-            android:backgroundTint="@color/orange_bg"
-            android:textColor="@color/white"
-            android:textStyle="bold"
-            android:layout_marginBottom="16dp"/>
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnSaveHistory"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Save Logs"
+                android:textColor="#64FFDA"
+                android:layout_marginEnd="4dp"/>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/btnClearHistory"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="Clear History"
+                android:textColor="#FF5252"
+                android:layout_marginStart="4dp"/>
+        </LinearLayout>
 
     </LinearLayout>
 </ScrollView>
