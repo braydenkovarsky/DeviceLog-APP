@@ -156,9 +156,17 @@ class NetworkActivity : AppCompatActivity() {
     }
 
     private fun showAboutDialog() {
+        val aboutMessage = """
+            SYSTEM INTELLIGENCE INTERFACE
+            Build Version: 1.1.2 [STABLE]
+            
+            ARCHITECTURE OVERVIEW:
+            This application is engineered by an individual developer as a high-fidelity diagnostic utility. By interfacing with low-level hardware abstraction layers, the system synthesizes real-time telemetry regarding electrical, thermal, and computational states.
+        """.trimIndent()
+
         AlertDialog.Builder(this)
             .setTitle("System Documentation")
-            .setMessage("Individual Developer Build v1.1.2\nSecure hardware telemetry interface.")
+            .setMessage(aboutMessage)
             .setPositiveButton("Dismiss", null)
             .setNeutralButton("Submit Bug") { _, _ ->
                 startActivity(Intent(this, BugReportActivity::class.java))
@@ -168,12 +176,54 @@ class NetworkActivity : AppCompatActivity() {
 
     private fun showPrivacyPolicyDialog() {
         val webView = WebView(this)
-        webView.loadDataWithBaseURL(null, getProfessionalPrivacyHtml(), "text/html", "UTF-8", null)
-        AlertDialog.Builder(this).setTitle("Privacy Protocol").setView(webView).setPositiveButton("OK", null).show()
+        val htmlContent = getProfessionalPrivacyHtml()
+        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
+        AlertDialog.Builder(this)
+            .setTitle("Privacy & Security Protocol")
+            .setView(webView)
+            .setPositiveButton("Acknowledge", null)
+            .show()
     }
 
     private fun getProfessionalPrivacyHtml(): String {
-        return "<html><body style='background:#0A0C14;color:#94A3B8;padding:20px;font-family:sans-serif;'><h2>100% Truth Protocol</h2><p>Data integrity is paramount. All network analysis is localized and user-defined.</p></body></html>"
+        return """
+            <html>
+            <head>
+            <style>
+                body { background-color:#0A0C14; color:#94A3B8; padding:30px; font-family: sans-serif; line-height:1.8; font-size: 11px; }
+                .header { border-bottom: 2px solid #1E293B; padding-bottom: 20px; margin-bottom: 30px; }
+                h1 { color:#64FFDA; font-size: 18px; letter-spacing: 1px; margin:0; text-transform: uppercase; }
+                h2 { color:#E2E8F0; font-size: 13px; margin-top: 30px; border-left: 3px solid #64FFDA; padding-left: 15px; text-transform: uppercase; }
+                p { margin-bottom: 15px; text-align: justify; }
+                b { color:#F1F5F9; font-weight: 600; }
+                .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #1E293B; font-size: 10px; color: #475569; text-align: center; }
+            </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Data Integrity & Privacy Protocol</h1>
+                    <p>Architecture Revision: 2026.SEC-X1 // Individual Dev Build</p>
+                </div>
+                <h2>1.0 DESIGN INTENTION</h2>
+                <p>InfoCore is built with the fundamental intention of providing <b>absolute data authenticity and security</b>. Every design choice is dictated by the requirement for secure, localized hardware transparency. The system architecture fundamentally rejects the integration of cloud-based telemetry, ensuring that diagnostic variables remain confined to the origin device.</p>
+                <h2>2.0 HARDWARE & STORAGE ENCAPSULATION</h2>
+                <p>Telemetry involving PMIC (Power Management Integrated Circuit) polling, voltage analysis, and thermal state synthesis is processed via <b>Isolated Subsystem Queries</b>. Storage analysis permissions (including MANAGE_EXTERNAL_STORAGE) are utilized exclusively for <b>Volume Capacity Analysis</b> and block-level measurement. The system does not index, read, or cache personal user files, photos, or documents.</p>
+                <h2>3.0 VOLATILE MEMORY ARCHITECTURE</h2>
+                <p>To ensure maximum security and forensic resistance, the system utilizes a <b>Purely Volatile Framework</b>. 
+                <ul>
+                    <li><b>Transient State:</b> Data is processed in real-time RAM and is never committed to persistent storage.</li>
+                    <li><b>Cycle Purge:</b> Hardware polling cycles are ephemeral; previous telemetry states are discarded as new data is synthesized.</li>
+                    <li><b>Process Isolation:</b> Termination triggers an immediate purge of the memory heap allocated for hardware monitoring.</li>
+                </ul></p>
+                <h2>4.0 CORE INTEGRITY STANDARDS</h2>
+                <p>This software is built using only native system libraries to ensure the code remains clean and auditable. All third-party SDKs, analytics beacons, and tracking identifiers have been intentionally omitted from the source code.</p>
+                <div class="footer">
+                    ENGINEERED FOR AUTHENTICITY AND SYSTEM SECURITY<br>
+                    SECURE ARCHITECTURE BY DESIGN.
+                </div>
+            </body>
+            </html>
+        """.trimIndent()
     }
 
     private fun startLiveMonitor() {
