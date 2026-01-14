@@ -3,12 +3,13 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.infocore">
 
-    <!-- Permissions -->
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
-    <!-- Optional for full storage analysis on Android 11+ -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
     <uses-permission
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
@@ -21,7 +22,6 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.InfoCore">
 
-        <!-- Splash Activity -->
         <activity
             android:name=".SplashActivity"
             android:exported="true"
@@ -32,14 +32,17 @@
             </intent-filter>
         </activity>
 
-        <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
             android:exported="false" />
 
-        <!-- Network Activity -->
         <activity
             android:name=".NetworkActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".BugReportActivity"
+            android:label="Submit Bug Report"
             android:exported="false" />
 
     </application>

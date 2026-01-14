@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0A0C14"
+    android:fillViewport="true"
+    android:fitsSystemWindows="true">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="24dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="SECURE DIAGNOSTIC SUBMISSION"
+            android:textColor="#64FFDA"
+            android:textStyle="bold"
+            android:textSize="20sp"
+            android:letterSpacing="0.1"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="PROTOCOL: BUG_REPORT_v2.3"
+            android:textColor="#475569"
+            android:textSize="10sp"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="[01] SELECT INCIDENT CATEGORY"
+            android:textColor="#94A3B8"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <Spinner
+            android:id="@+id/spinnerCategory"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="60dp"
+            android:backgroundTint="#64FFDA"
+            android:layout_marginBottom="24dp"
+            android:overlapAnchor="false"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="[02] INCIDENT DESCRIPTION / REPRODUCTION"
+            android:textColor="#94A3B8"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+        <EditText
+            android:id="@+id/etSteps"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="120dp"
+            android:hint="Detail the exact steps taken..."
+            android:gravity="top"
+            android:padding="15dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#334155"
+            android:background="@drawable/edittext_border"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="[03] EXPECTED SYSTEM BEHAVIOR"
+            android:textColor="#94A3B8"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+        <EditText
+            android:id="@+id/etExpected"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="100dp"
+            android:hint="What should have happened?"
+            android:gravity="top"
+            android:padding="15dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#334155"
+            android:background="@drawable/edittext_border"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="[04] ADDITIONAL OBSERVATIONS"
+            android:textColor="#94A3B8"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+        <EditText
+            android:id="@+id/etAdditional"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:minHeight="80dp"
+            android:hint="Optional hardware notes..."
+            android:gravity="top"
+            android:padding="15dp"
+            android:textColor="#FFFFFF"
+            android:textColorHint="#334155"
+            android:background="@drawable/edittext_border"
+            android:layout_marginBottom="24dp"/>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="[05] VISUAL EVIDENCE (OPTIONAL)"
+            android:textColor="#94A3B8"
+            android:textSize="11sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="8dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="32dp">
+
+            <Button
+                android:id="@+id/btnAttachPhoto"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="ATTACH PHOTO"
+                android:backgroundTint="#1E293B"
+                android:textColor="#64FFDA"
+                android:textSize="12sp" />
+
+            <LinearLayout
+                android:id="@+id/layoutPreview"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical"
+                android:layout_marginStart="16dp"
+                android:visibility="gone">
+
+                <ImageView
+                    android:id="@+id/ivPreview"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:scaleType="centerCrop"
+                    android:background="@drawable/edittext_border" />
+
+                <Button
+                    android:id="@+id/btnRemovePhoto"
+                    style="?android:attr/borderlessButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="CLEAR"
+                    android:textColor="#FF5252"
+                    android:textSize="10sp"
+                    android:textStyle="bold"
+                    android:layout_marginStart="8dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/btnSendReport"
+            android:layout_width="match_parent"
+            android:layout_height="65dp"
+            android:text="AUTHORIZE &amp; DISPATCH"
+            android:backgroundTint="#64FFDA"
+            android:textColor="#0A0C14"
+            android:textStyle="bold"
+            android:letterSpacing="0.1"/>
+
+    </LinearLayout>
+</ScrollView>

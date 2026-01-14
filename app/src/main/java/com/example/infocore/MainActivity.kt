@@ -104,14 +104,15 @@ class MainActivity : AppCompatActivity() {
             
             ARCHITECTURE OVERVIEW:
             This application is engineered by an individual developer as a high-fidelity diagnostic utility. By interfacing with low-level hardware abstraction layers, the system synthesizes real-time telemetry regarding electrical, thermal, and computational states.
-            
-            The framework is optimized for transparency and authenticity, providing an accurate representation of hardware variables with negligible impact on system overhead.
         """.trimIndent()
 
         AlertDialog.Builder(this)
             .setTitle("System Documentation")
             .setMessage(aboutMessage)
             .setPositiveButton("Dismiss", null)
+            .setNeutralButton("Submit Bug") { _, _ ->
+                startActivity(Intent(this, BugReportActivity::class.java))
+            }
             .show()
     }
 
@@ -145,30 +146,19 @@ class MainActivity : AppCompatActivity() {
                     <h1>Data Integrity & Privacy Protocol</h1>
                     <p>Architecture Revision: 2026.SEC-X1 // Individual Dev Build</p>
                 </div>
-
                 <h2>1.0 DESIGN INTENTION</h2>
                 <p>InfoCore is built with the fundamental intention of providing <b>absolute data authenticity and security</b>. Every design choice is dictated by the requirement for secure, localized hardware transparency. The system architecture fundamentally rejects the integration of cloud-based telemetry, ensuring that diagnostic variables remain confined to the origin device.</p>
-
                 <h2>2.0 HARDWARE & STORAGE ENCAPSULATION</h2>
                 <p>Telemetry involving PMIC (Power Management Integrated Circuit) polling, voltage analysis, and thermal state synthesis is processed via <b>Isolated Subsystem Queries</b>. Storage analysis permissions (including MANAGE_EXTERNAL_STORAGE) are utilized exclusively for <b>Volume Capacity Analysis</b> and block-level measurement. The system does not index, read, or cache personal user files, photos, or documents.</p>
-
                 <h2>3.0 VOLATILE MEMORY ARCHITECTURE</h2>
                 <p>To ensure maximum security and forensic resistance, the system utilizes a <b>Purely Volatile Framework</b>. 
                 <ul>
                     <li><b>Transient State:</b> Data is processed in real-time RAM and is never committed to persistent storage.</li>
-                    <li><b>Cycle Purge:</b> Hardware polling cycles are designed to be ephemeral; previous telemetry states are discarded as new data is synthesized.</li>
-                    <li><b>Process Isolation:</b> Termination of the application lifecycle triggers an immediate purge of the memory heap allocated for hardware monitoring.</li>
+                    <li><b>Cycle Purge:</b> Hardware polling cycles are ephemeral; previous telemetry states are discarded as new data is synthesized.</li>
+                    <li><b>Process Isolation:</b> Termination triggers an immediate purge of the memory heap allocated for hardware monitoring.</li>
                 </ul></p>
-
-                <h2>4.0 SECURITY & NETWORK TRANSPARENCY</h2>
-                <p>Network diagnostic tools within this suite are designed for <b>Passive Benchmarking</b>. All connections are transient and user-initiated. Reports are only generated via explicit user intent using the Android Storage Access Framework, ensuring that the control over data export remains entirely in the hands of the system operator.</p>
-
-                <h2>5.0 CORE INTEGRITY STANDARDS</h2>
-                <p>This software is built using only native system libraries to ensure the code remains clean and auditable. All third-party SDKs, analytics beacons, and tracking identifiers have been intentionally omitted from the source code to maintain the highest level of system integrity.</p>
-
-                <h2>6.0 REGULATORY COMPLIANCE</h2>
-                <p>By prioritizing data minimization, this framework exceeds the standards set by the <b>GDPR</b> and <b>CCPA</b>. As the system architecture prevents the collection or storage of Personal Identifiable Information (PII), privacy is not just a policy but a technical certainty of the build.</p>
-
+                <h2>4.0 CORE INTEGRITY STANDARDS</h2>
+                <p>This software is built using only native system libraries to ensure the code remains clean and auditable. All third-party SDKs, analytics beacons, and tracking identifiers have been intentionally omitted from the source code.</p>
                 <div class="footer">
                     ENGINEERED FOR AUTHENTICITY AND SYSTEM SECURITY<br>
                     SECURE ARCHITECTURE BY DESIGN.
