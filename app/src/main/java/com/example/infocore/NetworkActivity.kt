@@ -1,32 +1,28 @@
 package com.example.infocore
 
-import android.Manifest
-import android.app.ActivityManager
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import android.content.IntentFilter
-import android.content.pm.PackageManager
 import android.graphics.Color
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.net.wifi.WifiManager
 import android.os.*
-import android.telephony.*
 import android.text.Spannable
 import android.text.SpannableString
 import android.text.SpannableStringBuilder
-import android.text.format.Formatter
 import android.text.style.ForegroundColorSpan
 import android.view.View
 import android.view.WindowManager
+import android.webkit.WebView
 import android.widget.*
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.ActivityCompat
 import androidx.core.view.GravityCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
-import java.io.File
 import java.net.InetAddress
 import java.text.SimpleDateFormat
 import java.util.*
@@ -46,8 +42,7 @@ class NetworkActivity : AppCompatActivity() {
     private lateinit var etCustomServer: EditText
     private lateinit var btnPingCustom: Button
     private lateinit var tvPingHistory: TextView
-    private lateinit var scrollView: ScrollView
-    private lateinit var btnSaveHistory: Button
+    private lateinit var btnSaveReport: Button
     private lateinit var btnClearHistory: Button
 
     private val handler = Handler(Looper.getMainLooper())
@@ -64,6 +59,27 @@ class NetworkActivity : AppCompatActivity() {
         "Quad9 DNS (9.9.9.9)" to "9.9.9.9"
     )
 
+    private val saveFileLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == Activity.RESULT_OK) {
+            result.data?.data?.let { uri ->
+                contentResolver.openOutputStream(uri)?.use { output ->
+                    val header = "==========================================\n" +
+                            "INFOCORE SYSTEM DIAGNOSTIC REPORT\n" +
+                            "Revision: 2026.SEC-X1\n" +
+                            "Generated: ${SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())}\n" +
+                            "==========================================\n\n" +
+                            "NETWORK TELEMETRY LOGS:\n"
+                    val reportBody = pingHistory.joinToString("\n")
+                    val footer = "\n\n==========================================\n" +
+                            "END OF SECURE DIAGNOSTIC REPORT\n" +
+                            "=========================================="
+                    output.write((header + reportBody + footer).toByteArray())
+                    Toast.makeText(this, "Diagnostic Log Saved Successfully", Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         window.apply {
@@ -76,7 +92,6 @@ class NetworkActivity : AppCompatActivity() {
 
         initViews()
         setupListeners()
-        checkPermissions()
         startLiveMonitor()
     }
 
@@ -93,8 +108,7 @@ class NetworkActivity : AppCompatActivity() {
         etCustomServer = findViewById(R.id.etCustomServer)
         btnPingCustom = findViewById(R.id.btnPingCustom)
         tvPingHistory = findViewById(R.id.tvPingHistory)
-        scrollView = findViewById(R.id.scrollView)
-        btnSaveHistory = findViewById(R.id.btnSaveHistory)
+        btnSaveReport = findViewById(R.id.btnSaveHistory)
         btnClearHistory = findViewById(R.id.btnClearHistory)
 
         val adapter = ArrayAdapter(this, R.layout.spinner_item, dnsServers.map { it.first })
@@ -105,24 +119,112 @@ class NetworkActivity : AppCompatActivity() {
     private fun setupListeners() {
         topAppBar.setNavigationOnClickListener { drawerLayout.openDrawer(GravityCompat.START) }
         navView.setNavigationItemSelectedListener { menuItem ->
-            if (menuItem.itemId == R.id.nav_dashboard) {
-                startActivity(Intent(this, MainActivity::class.java))
-                finish()
-            }
+            handleNavItemSelected(menuItem.itemId)
             drawerLayout.closeDrawers()
             true
         }
-
         btnRunPing.setOnClickListener { runPing(dnsServers[spinnerServers.selectedItemPosition].second) }
         btnPingCustom.setOnClickListener {
             val ip = etCustomServer.text.toString().trim()
             if (ip.isNotEmpty()) runPing(ip)
         }
-        btnSaveHistory.setOnClickListener { saveHistoryToFile() }
         btnClearHistory.setOnClickListener {
             pingHistory.clear()
-            tvPingHistory.text = "Logs Wiped."
+            updateHistoryDisplay()
+            Toast.makeText(this, "Memory Purged", Toast.LENGTH_SHORT).show()
         }
+        btnSaveReport.setOnClickListener {
+            if (pingHistory.isEmpty()) {
+                Toast.makeText(this, "Invalid Ping History", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+            val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "text/plain"
+                putExtra(Intent.EXTRA_TITLE, "infocore_netlog_${System.currentTimeMillis()}.txt")
+            }
+            saveFileLauncher.launch(intent)
+        }
+    }
+
+    private fun handleNavItemSelected(itemId: Int) = when (itemId) {
+        R.id.nav_dashboard -> {
+            startActivity(Intent(this, MainActivity::class.java))
+            finish()
+        }
+        R.id.menuInfo -> showAboutDialog()
+        R.id.menuPrivacy -> showPrivacyPolicyDialog()
+        else -> {}
+    }
+
+    private fun showAboutDialog() {
+        val aboutMessage = """
+            SYSTEM INTELLIGENCE INTERFACE
+            Build Version: 1.0(STABLE)
+            
+            ARCHITECTURE OVERVIEW:
+            This application is engineered by an individual developer as a high-fidelity diagnostic utility. By interfacing with low-level hardware abstraction layers, the system synthesizes real-time telemetry regarding electrical, thermal, and computational states.
+        """.trimIndent()
+        AlertDialog.Builder(this).setTitle("System Documentation").setMessage(aboutMessage).setPositiveButton("Dismiss", null).show()
+    }
+
+    private fun showPrivacyPolicyDialog() {
+        val webView = WebView(this)
+        val htmlContent = getProfessionalPrivacyHtml()
+        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
+        AlertDialog.Builder(this).setTitle("Privacy & Security Protocol").setView(webView).setPositiveButton("Acknowledge", null).show()
+    }
+
+    private fun getProfessionalPrivacyHtml(): String {
+        return """
+            <html>
+            <head>
+            <style>
+                body { background-color:#0A0C14; color:#94A3B8; padding:30px; font-family: sans-serif; line-height:1.8; font-size: 11px; }
+                .header { border-bottom: 2px solid #1E293B; padding-bottom: 20px; margin-bottom: 30px; }
+                h1 { color:#64FFDA; font-size: 18px; letter-spacing: 1px; margin:0; text-transform: uppercase; }
+                h2 { color:#E2E8F0; font-size: 13px; margin-top: 30px; border-left: 3px solid #64FFDA; padding-left: 15px; text-transform: uppercase; }
+                p { margin-bottom: 15px; text-align: justify; }
+                b { color:#F1F5F9; font-weight: 600; }
+                .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #1E293B; font-size: 10px; color: #475569; text-align: center; }
+            </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>Data Integrity & Privacy Protocol</h1>
+                    <p>Architecture Revision: 2026.SEC-X1 // Individual Dev Build</p>
+                </div>
+
+                <h2>1.0 DESIGN INTENTION</h2>
+                <p>InfoCore is built with the fundamental intention of providing <b>absolute data authenticity and security</b>. Every design choice is dictated by the requirement for secure, localized hardware transparency. The system architecture fundamentally rejects the integration of cloud-based telemetry, ensuring that diagnostic variables remain confined to the origin device.</p>
+
+                <h2>2.0 HARDWARE & STORAGE ENCAPSULATION</h2>
+                <p>Telemetry involving PMIC (Power Management Integrated Circuit) polling, voltage analysis, and thermal state synthesis is processed via <b>Isolated Subsystem Queries</b>. Storage analysis permissions (including MANAGE_EXTERNAL_STORAGE) are utilized exclusively for <b>Volume Capacity Analysis</b> and block-level measurement. The system does not index, read, or cache personal user files, photos, or documents.</p>
+
+                <h2>3.0 VOLATILE MEMORY ARCHITECTURE</h2>
+                <p>To ensure maximum security and forensic resistance, the system utilizes a <b>Purely Volatile Framework</b>. 
+                <ul>
+                    <li><b>Transient State:</b> Data is processed in real-time RAM and is never committed to persistent storage.</li>
+                    <li><b>Cycle Purge:</b> Hardware polling cycles are designed to be ephemeral; previous telemetry states are discarded as new data is synthesized.</li>
+                    <li><b>Process Isolation:</b> Termination of the application lifecycle triggers an immediate purge of the memory heap allocated for hardware monitoring.</li>
+                </ul></p>
+
+                <h2>4.0 SECURITY & NETWORK TRANSPARENCY</h2>
+                <p>Network diagnostic tools within this suite are designed for <b>Passive Benchmarking</b>. All connections are transient and user-initiated. Reports are only generated via explicit user intent using the Android Storage Access Framework, ensuring that the control over data export remains entirely in the hands of the system operator.</p>
+
+                <h2>5.0 CORE INTEGRITY STANDARDS</h2>
+                <p>This software is built using only native system libraries to ensure the code remains clean and auditable. All third-party SDKs, analytics beacons, and tracking identifiers have been intentionally omitted from the source code to maintain the highest level of system integrity.</p>
+
+                <h2>6.0 REGULATORY COMPLIANCE</h2>
+                <p>By prioritizing data minimization, this framework exceeds the standards set by the <b>GDPR</b> and <b>CCPA</b>. As the system architecture prevents the collection or storage of Personal Identifiable Information (PII), privacy is not just a policy but a technical certainty of the build.</p>
+
+                <div class="footer">
+                    ENGINEERED FOR AUTHENTICITY AND SYSTEM SECURITY<br>
+                    SECURE ARCHITECTURE BY DESIGN.
+                </div>
+            </body>
+            </html>
+        """.trimIndent()
     }
 
     private fun startLiveMonitor() {
@@ -137,21 +239,26 @@ class NetworkActivity : AppCompatActivity() {
     private fun updateRealTimeNetwork() {
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val caps = cm.getNetworkCapabilities(cm.activeNetwork)
+
         if (caps != null) {
             val isWifi = caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
             tvConnectionType.text = "Link: ${if (isWifi) "Wi-Fi" else "Cellular"}"
             tvConnectionType.setTextColor(Color.parseColor(COLOR_CYAN))
 
             if (isWifi) {
-                val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-                val level = WifiManager.calculateSignalLevel(wm.connectionInfo.rssi, 100)
-                tvSignal.text = "Quality: $level%"
+                val wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
+                val wifiInfo = wifiManager.connectionInfo
+                val speed = wifiInfo.linkSpeed
+                val rssi = wifiInfo.rssi
+                val level = WifiManager.calculateSignalLevel(rssi, 100)
+                tvSignal.text = "Signal: $level% ($speed Mbps)"
             } else {
                 tvSignal.text = "Signal: Active"
             }
         } else {
-            tvConnectionType.text = "Link: Offline"
+            tvConnectionType.text = "Link: Disconnected"
             tvConnectionType.setTextColor(Color.parseColor(COLOR_RED))
+            tvSignal.text = "Signal: N/A"
         }
     }
 
@@ -172,7 +279,12 @@ class NetworkActivity : AppCompatActivity() {
                     pingHistory.add("[$ts] $ip: $resText")
                     updateHistoryDisplay()
                 }
-            } catch (e: Exception) { handler.post { progressPing.visibility = View.GONE } }
+            } catch (e: Exception) {
+                handler.post {
+                    progressPing.visibility = View.GONE
+                    tvPingResult.text = "Error: Host Unreachable"
+                }
+            }
         }
     }
 
@@ -185,108 +297,5 @@ class NetworkActivity : AppCompatActivity() {
             builder.append(span)
         }
         tvPingHistory.text = builder
-        scrollView.post { scrollView.fullScroll(ScrollView.FOCUS_DOWN) }
-    }
-
-    private fun generateDiagnosticReport(): String {
-        val date = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
-
-        val mi = ActivityManager.MemoryInfo()
-        (getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(mi)
-        val statFs = StatFs(Environment.getDataDirectory().path)
-        val availableStorage = (statFs.availableBlocksLong * statFs.blockSizeLong) / (1024 * 1024 * 1024)
-
-        val pm = getSystemService(Context.POWER_SERVICE) as PowerManager
-        val thermalStatus = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            when(pm.currentThermalStatus) {
-                PowerManager.THERMAL_STATUS_NONE -> "NORMAL"
-                PowerManager.THERMAL_STATUS_LIGHT -> "LIGHT WARM"
-                PowerManager.THERMAL_STATUS_MODERATE -> "MODERATE"
-                PowerManager.THERMAL_STATUS_SEVERE -> "THROTTLING"
-                else -> "CRITICAL"
-            }
-        } else "N/A"
-
-        val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        val battTemp = (batteryIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0) / 10.0
-        val battVolt = batteryIntent?.getIntExtra(BatteryManager.EXTRA_VOLTAGE, 0) ?: 0
-
-        val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val activeNet = cm.activeNetwork
-        val caps = cm.getNetworkCapabilities(activeNet)
-        val isVPN = caps?.hasTransport(NetworkCapabilities.TRANSPORT_VPN) ?: false
-
-        val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
-        val wifiInfo = wm.connectionInfo
-        val freq = if (wifiInfo.frequency > 5000) "5GHz" else "2.4GHz"
-
-        val latencies = pingHistory.mapNotNull { if (it.contains("ms")) it.substringAfter(": ").substringBefore(" ms").toLong() else null }
-        val avgLat = if (latencies.isNotEmpty()) latencies.average() else 0.0
-        val jitter = if (latencies.size > 1) {
-            latencies.zipWithNext { a, b -> Math.abs(a - b) }.average()
-        } else 0.0
-
-        return StringBuilder().apply {
-            append("╔══════════════════════════════════════════════════╗\n")
-            append("║            INFOCORE DIAGNOSTIC REPORT            ║\n")
-            append("╚══════════════════════════════════════════════════╝\n\n")
-
-            append("[GENERAL SYSTEM DATA]\n")
-            append(String.format("TIMESTAMP      : %s\n", date))
-            append(String.format("HARDWARE       : %s %s\n", Build.MANUFACTURER, Build.MODEL))
-            append(String.format("THERMAL STATE  : %s\n", thermalStatus))
-            append(String.format("STORAGE        : %d GB AVAILABLE\n", availableStorage))
-            append(String.format("POWER STATUS   : %.1f°C / %d mV\n", battTemp, battVolt))
-            append("----------------------------------------------------\n\n")
-
-            append("[NETWORK CONFIGURATION]\n")
-            append(String.format("CONNECTION     : %s\n", tvConnectionType.text))
-            append(String.format("VPN STATUS     : %s\n", if (isVPN) "ACTIVE" else "DISABLED"))
-            append(String.format("INTERFACE      : %s (%d Mbps)\n", freq, wifiInfo.linkSpeed))
-            append(String.format("LOCAL ADDRESS  : %s\n", Formatter.formatIpAddress(wifiInfo.ipAddress)))
-            append("----------------------------------------------------\n\n")
-
-            append("[ANALYTICS & TELEMETRY]\n")
-            append(String.format("AVERAGE LATENCY: %.2f ms\n", avgLat))
-            append(String.format("NETWORK JITTER : %.2f ms\n", jitter))
-            append(String.format("PACKET DROP    : %d TIMEOUTS\n", pingHistory.count { it.contains("TIMEOUT") }))
-            append("----------------------------------------------------\n\n")
-
-            append(String.format("%-12s | %-20s | %-12s\n", "TIMESTAMP", "TARGET HOST", "LATENCY"))
-            append("-------------|----------------------|-------------\n")
-            pingHistory.forEach { line ->
-                val time = line.substringAfter("[").substringBefore("]")
-                val host = line.substringAfter("] ").substringBefore(":")
-                val res = line.substringAfter(": ")
-                append(String.format("%-12s | %-20s | %-12s\n", time, host, res))
-            }
-            append("\n[END OF REPORT]\n")
-        }.toString()
-    }
-
-    private fun saveHistoryToFile() {
-        if (pingHistory.isEmpty()) return
-        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
-            addCategory(Intent.CATEGORY_OPENABLE)
-            type = "text/plain"
-            putExtra(Intent.EXTRA_TITLE, "InfoCore_Report_${System.currentTimeMillis()}.txt")
-        }
-        startActivityForResult(intent, 1001)
-    }
-
-    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
-        super.onActivityResult(requestCode, resultCode, data)
-        if (requestCode == 1001 && resultCode == RESULT_OK) {
-            data?.data?.let { uri ->
-                contentResolver.openOutputStream(uri)?.use { it.write(generateDiagnosticReport().toByteArray()) }
-                Toast.makeText(this, "Report successfully saved", Toast.LENGTH_SHORT).show()
-            }
-        }
-    }
-
-    private fun checkPermissions() {
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 100)
-        }
     }
 }
