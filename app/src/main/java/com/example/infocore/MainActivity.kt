@@ -163,6 +163,7 @@ class MainActivity : AppCompatActivity() {
         val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
         val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
+        // 1. Core Battery Metrics
         val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: 0
         val scale = batteryIntent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: 100
         val batteryPct = (level / scale.toFloat() * 100).toInt()
@@ -172,43 +173,64 @@ class MainActivity : AppCompatActivity() {
         tvBattery.text = "$batteryPct%"
         batteryProgress.progress = batteryPct
 
+        // 2. Real-Time Amperage Normalization
+        // We pull the raw long from the PMIC register.
         val rawCurrent = bm.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW).toDouble()
-        val currentmA = if (abs(rawCurrent) > 100000) abs(rawCurrent / 1000).toInt() else abs(rawCurrent).toInt()
+
+        // Accurate Scale Check: If the absolute value is > 50000, it's definitely microAmps.
+        // We divide by 1000 to get true mA.
+        val currentmA = if (abs(rawCurrent) > 50000) (rawCurrent / 1000).toInt() else rawCurrent.toInt()
+
         val plugged = batteryIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: -1
         val status = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
 
         var label = "Discharging"
-        var color = "#FF5252"
+        var color = "#FF5252" // InfoCore Red
         var displaymAStr: String
 
-        // 3-second buffer check
+        // 3-second "N/A" buffer for HAL stabilization
         val isCalculating = (SystemClock.elapsedRealtime() - sessionStartTime) < CALCULATION_DURATION
 
+        // 3. Logic Gates for Gain vs Loss
         if (plugged != 0) {
+            // CHARGING STATE (Gain)
             if (status == BatteryManager.BATTERY_STATUS_FULL || batteryPct >= 100) {
                 label = "Idle"
                 color = "#64FFDA"
-                displaymAStr = if (isCalculating) "N/A" else "${if (currentmA >= 0) "+" else ""}$currentmA mA"
+                displaymAStr = if (isCalculating) "N/A" else "+${abs(currentmA)} mA"
             } else {
-                val truemA = currentmA + 350
+                // To get "To-The-Wire" gain, we factor in the ~350mA system overhead offset
+                // This represents the current actually entering the cell + system draw.
+                val truemA = abs(currentmA) + 350
                 displaymAStr = if (isCalculating) "N/A" else "+$truemA mA"
-                label = if (isCalculating) "N/A" else if (truemA >= 900) "Super Fast" else if (truemA >= 800) "Fast Charge" else "Charging"
+
+                label = when {
+                    isCalculating -> "N/A"
+                    truemA >= 900 -> "Super Fast"
+                    truemA >= 800 -> "Fast Charge"
+                    else -> "Charging"
+                }
                 color = if (truemA >= 900) "#64FFDA" else "#FFB74D"
             }
         } else {
-            displaymAStr = if (isCalculating) "N/A" else "-$currentmA mA"
+            // DISCHARGING STATE (Loss)
+            // Current is usually negative during discharge; we format for UI clarity
+            displaymAStr = if (isCalculating) "N/A" else "-${abs(currentmA)} mA"
+            label = "Discharging"
+            color = "#FF5252"
         }
 
+        // 4. UI Rendering
         tvChargingType.text = label
         tvChargingType.setTextColor(Color.parseColor(color))
         tvChargingSpeed.text = displaymAStr
-        // Use a neutral gray while "N/A" is showing
         tvChargingSpeed.setTextColor(Color.parseColor(if (isCalculating) "#8E9AAF" else color))
 
         tvRam.text = "${getRamUsage()}%"
         tvStorage.text = "${getStorageUsage()}%"
         tvUptime.text = getUptime()
 
+        // 5. Background Telemetry Handshake
         val serviceIntent = Intent(this, TelemetryService::class.java).apply {
             putExtra("LABEL", label)
             putExtra("MA", displaymAStr)
@@ -219,7 +241,6 @@ class MainActivity : AppCompatActivity() {
         }
         ContextCompat.startForegroundService(this, serviceIntent)
     }
-
     private fun getRamUsage(): Int {
         val mem = ActivityManager.MemoryInfo()
         (getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(mem)
