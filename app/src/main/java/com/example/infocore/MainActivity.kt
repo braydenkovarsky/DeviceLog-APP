@@ -4,7 +4,6 @@ import android.Manifest
 import android.app.ActivityManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.IntentFilter
@@ -19,7 +18,6 @@ import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.drawerlayout.widget.DrawerLayout
 import com.google.android.material.appbar.MaterialToolbar
@@ -49,16 +47,15 @@ class MainActivity : AppCompatActivity() {
     private lateinit var topAppBar: MaterialToolbar
     private lateinit var btnOpenNetwork: Button
 
-    // Logic for the 3-second calculation buffer
     private var sessionStartTime = 0L
     private val CALCULATION_DURATION = 3000L
 
-    private var lastAlertTime = 0L
     private val handler = Handler(Looper.getMainLooper())
-    private val updateRunnable = object : Runnable {
+
+    // UI Refresh Loop (ONLY runs when Activity is visible)
+    private val uiUpdateRunnable = object : Runnable {
         override fun run() {
-            updateDeviceInfo()
-            updateDeviceHealth()
+            refreshDisplay()
             handler.postDelayed(this, 1000L)
         }
     }
@@ -66,8 +63,10 @@ class MainActivity : AppCompatActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        if (!isGranted) {
-            Toast.makeText(this, "Status Bar Monitoring Disabled", Toast.LENGTH_LONG).show()
+        if (isGranted) {
+            startTelemetryService()
+        } else {
+            Toast.makeText(this, "Telemetry Backgrounding Disabled", Toast.LENGTH_LONG).show()
         }
     }
 
@@ -75,13 +74,20 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        // Capture session start time to trigger the 3s audit
         sessionStartTime = SystemClock.elapsedRealtime()
 
         initViews()
-        createNotificationChannel()
+        createNotificationChannels()
         checkNotificationPermission()
         populateFooterInfo()
+
+        // Ensure service starts immediately
+        startTelemetryService()
+    }
+
+    private fun startTelemetryService() {
+        val serviceIntent = Intent(this, TelemetryService::class.java)
+        ContextCompat.startForegroundService(this, serviceIntent)
     }
 
     private fun initViews() {
@@ -103,12 +109,7 @@ class MainActivity : AppCompatActivity() {
 
         topAppBar.setNavigationOnClickListener { drawerLayout.openDrawer(navView) }
         btnOpenNetwork.setOnClickListener {
-            startActivity(
-                Intent(
-                    this,
-                    NetworkActivity::class.java
-                )
-            )
+            startActivity(Intent(this, NetworkActivity::class.java))
         }
 
         navView.setNavigationItemSelectedListener {
@@ -122,125 +123,81 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun checkNotificationPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.POST_NOTIFICATIONS
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-            }
-        }
-    }
-
-    private fun createNotificationChannel() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val manager = getSystemService(NotificationManager::class.java)
-
-            val channel = NotificationChannel(
-                "LIVE_TELEMETRY", "System Telemetry",
-                NotificationManager.IMPORTANCE_LOW
-            ).apply {
-                description = "Status bar hardware telemetry updates"
-                setShowBadge(false)
-            }
-
-            val urgentChannel = NotificationChannel(
-                "URGENT_ALERTS", "Urgent Hardware Alerts",
-                NotificationManager.IMPORTANCE_HIGH
-            ).apply {
-                description = "Critical thermal warnings"
-                enableVibration(false)
-            }
-
-            manager.createNotificationChannel(channel)
-            manager.createNotificationChannel(urgentChannel)
-        }
-    }
-
-    private fun updateDeviceInfo() {
+    private fun refreshDisplay() {
         val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
         val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
-        // 1. Core Battery Metrics
+        // Basic Battery
         val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: 0
         val scale = batteryIntent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: 100
         val batteryPct = (level / scale.toFloat() * 100).toInt()
         val rawTemp = batteryIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
-        val tempDisplay = "${rawTemp / 10.0}°C"
+        val tempCelsius = rawTemp / 10.0
 
         tvBattery.text = "$batteryPct%"
         batteryProgress.progress = batteryPct
+        tvTemperature.text = "${tempCelsius}°C"
 
-        // 2. Real-Time Amperage Normalization
-        // We pull the raw long from the PMIC register.
+        // Amperage Logic
         val rawCurrent = bm.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW).toDouble()
-
-        // Accurate Scale Check: If the absolute value is > 50000, it's definitely microAmps.
-        // We divide by 1000 to get true mA.
-        val currentmA = if (abs(rawCurrent) > 50000) (rawCurrent / 1000).toInt() else rawCurrent.toInt()
-
+        val currentmA = if (abs(rawCurrent) > 100000) abs(rawCurrent / 1000).toInt() else abs(rawCurrent).toInt()
         val plugged = batteryIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: -1
         val status = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
 
-        var label = "Discharging"
-        var color = "#FF5252" // InfoCore Red
-        var displaymAStr: String
-
-        // 3-second "N/A" buffer for HAL stabilization
         val isCalculating = (SystemClock.elapsedRealtime() - sessionStartTime) < CALCULATION_DURATION
 
-        // 3. Logic Gates for Gain vs Loss
+        var label = "Discharging"
+        var color = "#FF5252"
+        var displaymAStr: String
+
         if (plugged != 0) {
-            // CHARGING STATE (Gain)
             if (status == BatteryManager.BATTERY_STATUS_FULL || batteryPct >= 100) {
                 label = "Idle"
                 color = "#64FFDA"
-                displaymAStr = if (isCalculating) "N/A" else "+${abs(currentmA)} mA"
+                displaymAStr = if (isCalculating) "N/A" else "+$currentmA mA"
             } else {
-                // To get "To-The-Wire" gain, we factor in the ~350mA system overhead offset
-                // This represents the current actually entering the cell + system draw.
-                val truemA = abs(currentmA) + 350
+                val truemA = currentmA + 350
                 displaymAStr = if (isCalculating) "N/A" else "+$truemA mA"
-
-                label = when {
-                    isCalculating -> "N/A"
-                    truemA >= 900 -> "Super Fast"
-                    truemA >= 800 -> "Fast Charge"
-                    else -> "Charging"
-                }
+                label = if (isCalculating) "N/A" else if (truemA >= 900) "Super Fast" else "Charging"
                 color = if (truemA >= 900) "#64FFDA" else "#FFB74D"
             }
         } else {
-            // DISCHARGING STATE (Loss)
-            // Current is usually negative during discharge; we format for UI clarity
-            displaymAStr = if (isCalculating) "N/A" else "-${abs(currentmA)} mA"
-            label = "Discharging"
-            color = "#FF5252"
+            displaymAStr = if (isCalculating) "N/A" else "-$currentmA mA"
         }
 
-        // 4. UI Rendering
         tvChargingType.text = label
         tvChargingType.setTextColor(Color.parseColor(color))
         tvChargingSpeed.text = displaymAStr
-        tvChargingSpeed.setTextColor(Color.parseColor(if (isCalculating) "#8E9AAF" else color))
 
+        // Health & System
         tvRam.text = "${getRamUsage()}%"
         tvStorage.text = "${getStorageUsage()}%"
         tvUptime.text = getUptime()
 
-        // 5. Background Telemetry Handshake
-        val serviceIntent = Intent(this, TelemetryService::class.java).apply {
-            putExtra("LABEL", label)
-            putExtra("MA", displaymAStr)
-            putExtra("PCT", batteryPct)
-            putExtra("TEMP", tempDisplay)
-            putExtra("COLOR", color)
-            putExtra("HEALTH_STATUS", tvDeviceHealthStatus.text.toString())
-        }
-        ContextCompat.startForegroundService(this, serviceIntent)
+        updateHealthWarnings(rawTemp)
     }
+
+    private fun updateHealthWarnings(temp: Int) {
+        val tempC = temp / 10.0
+        when {
+            temp >= 450 -> {
+                tvDeviceHealthStatus.text = "CRITICAL"
+                tvDeviceHealthStatus.setTextColor(Color.parseColor("#FF1744"))
+                tvPerformanceTips.text = "Thermal Overload: Shutdown Advised."
+            }
+            temp >= 350 -> {
+                tvDeviceHealthStatus.text = "POOR"
+                tvDeviceHealthStatus.setTextColor(Color.parseColor("#FFEA00"))
+                tvPerformanceTips.text = "Warm: High CPU load detected."
+            }
+            else -> {
+                tvDeviceHealthStatus.text = "EXCELLENT"
+                tvDeviceHealthStatus.setTextColor(Color.parseColor("#64FFDA"))
+                tvPerformanceTips.text = "Optimal: Hardware operating within spec."
+            }
+        }
+    }
+
     private fun getRamUsage(): Int {
         val mem = ActivityManager.MemoryInfo()
         (getSystemService(Context.ACTIVITY_SERVICE) as ActivityManager).getMemoryInfo(mem)
@@ -261,99 +218,48 @@ class MainActivity : AppCompatActivity() {
         return "${h}h ${m}m"
     }
 
-    private fun updateDeviceHealth() {
-        val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
-        val temp = batteryIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
-        val tempCelsius = temp / 10.0
-        tvTemperature.text = "${tempCelsius}°C"
-
-        when {
-            temp >= 450 -> { // 45°C
-                tvDeviceHealthStatus.text = "CRITICAL"
-                tvDeviceHealthStatus.setTextColor(Color.parseColor("#FF1744"))
-                tvPerformanceTips.text = "URGENT: Shutdown suggested. Hardware at risk."
-                sendUrgentAlert(
-                    "CRITICAL THERMAL OVERLOAD",
-                    "Temperature at ${tempCelsius}°C. Please cool device immediately."
-                )
-            }
-            temp >= 400 -> { // 40°C
-                tvDeviceHealthStatus.text = "BAD"
-                tvDeviceHealthStatus.setTextColor(Color.parseColor("#FF9100"))
-                tvPerformanceTips.text = "High Heat: Close background applications."
-            }
-            temp >= 350 -> { // 35°C
-                tvDeviceHealthStatus.text = "POOR"
-                tvDeviceHealthStatus.setTextColor(Color.parseColor("#FFEA00"))
-                tvPerformanceTips.text = "Warm: Avoid intensive gaming."
-            }
-            temp >= 280 -> { // 28°C
-                tvDeviceHealthStatus.text = "GOOD"
-                tvDeviceHealthStatus.setTextColor(Color.parseColor("#00E676"))
-                tvPerformanceTips.text = "Normal: System stable."
-            }
-            else -> {
-                tvDeviceHealthStatus.text = "EXCELLENT"
-                tvDeviceHealthStatus.setTextColor(Color.parseColor("#64FFDA"))
-                tvPerformanceTips.text = "Optimal: No action needed."
+    private fun checkNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
+                != PackageManager.PERMISSION_GRANTED) {
+                requestPermissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
             }
         }
     }
 
-    private fun sendUrgentAlert(title: String, message: String) {
-        val currentTime = System.currentTimeMillis()
-        if (currentTime - lastAlertTime < 60000) return
-
-        val manager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-        val intent = Intent(this, MainActivity::class.java)
-        val pendingIntent = PendingIntent.getActivity(this, 2, intent, PendingIntent.FLAG_IMMUTABLE)
-
-        val alert = NotificationCompat.Builder(this, "URGENT_ALERTS")
-            .setSmallIcon(android.R.drawable.ic_dialog_alert)
-            .setContentTitle(title)
-            .setContentText(message)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setCategory(NotificationCompat.CATEGORY_ALARM)
-            .setAutoCancel(true)
-            .setContentIntent(pendingIntent)
-            .build()
-
-        manager.notify(2002, alert)
-        lastAlertTime = currentTime
+    private fun createNotificationChannels() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val manager = getSystemService(NotificationManager::class.java)
+            val channel = NotificationChannel("LIVE_TELEMETRY", "System Telemetry", NotificationManager.IMPORTANCE_LOW)
+            val urgent = NotificationChannel("URGENT_ALERTS", "Urgent Alerts", NotificationManager.IMPORTANCE_HIGH)
+            manager.createNotificationChannel(channel)
+            manager.createNotificationChannel(urgent)
+        }
     }
 
     private fun populateFooterInfo() {
         thread {
             try {
-                val url =
-                    URL("https://raw.githubusercontent.com/androidtrackers/certified-android-devices/master/by_model.json")
-                val conn = url.openConnection() as HttpURLConnection
-                val json = conn.inputStream.bufferedReader().use { it.readText() }
-                val root = JSONObject(json)
-                val name =
-                    if (root.has(Build.MODEL)) root.getJSONArray(Build.MODEL).getJSONObject(0)
-                        .getString("name")
-                    else "${Build.MANUFACTURER} ${Build.MODEL}"
-                runOnUiThread {
-                    tvFooterInfo.text = "InfoCore System • Android ${Build.VERSION.RELEASE} • $name"
-                }
+                val url = URL("https://raw.githubusercontent.com/androidtrackers/certified-android-devices/master/by_model.json")
+                val json = url.readText()
+                val name = JSONObject(json).optJSONArray(Build.MODEL)?.optJSONObject(0)?.optString("name")
+                    ?: "${Build.MANUFACTURER} ${Build.MODEL}"
+                runOnUiThread { tvFooterInfo.text = "InfoCore System • Android ${Build.VERSION.RELEASE} • $name" }
             } catch (e: Exception) {
-                runOnUiThread {
-                    tvFooterInfo.text =
-                        "InfoCore System • Android ${Build.VERSION.RELEASE} • ${Build.MODEL}"
-                }
+                runOnUiThread { tvFooterInfo.text = "InfoCore System • Android ${Build.VERSION.RELEASE} • ${Build.MODEL}" }
             }
         }
     }
 
     override fun onResume() {
         super.onResume()
-        handler.post(updateRunnable)
+        handler.post(uiUpdateRunnable)
     }
 
     override fun onPause() {
         super.onPause()
-        handler.removeCallbacks(updateRunnable)
+        // Stop UI refresh to save battery, but TelemetryService stays alive!
+        handler.removeCallbacks(uiUpdateRunnable)
     }
 
     // --- EXACT 1:1 REPLICATION OF DIALOG LOGIC ---
@@ -476,11 +382,11 @@ class MainActivity : AppCompatActivity() {
             </div>
 
             <div class="footer">
-                INFOCORE_SYSTEM_INTERFACE_STABLE<br>
                 BUILD: 1.1.2_REVISION_4<br>
                 SHA-HASH: VERIFIED_LOCAL_EXECUTION<br>
                 ENCRYPTION_STATUS: HTTPS_TLS_1.3_ACTIVE<br>
                 SAMSUNG_HAL_STATE: OPTIMIZED
+                
             </div>
         </body>
         </html>
