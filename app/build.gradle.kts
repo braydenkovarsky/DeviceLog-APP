@@ -38,6 +38,7 @@ android {
 }
 
 dependencies {
+    implementation("androidx.media:media:1.7.0")
     implementation("com.github.bumptech.glide:glide:4.15.1")
     // kapt is optional; not needed if just loading GIFs
     // kapt('com.github.bumptech.glide:compiler:4.15.1')

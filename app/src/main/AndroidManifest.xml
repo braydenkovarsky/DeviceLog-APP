@@ -6,10 +6,15 @@
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-
     <uses-permission
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
@@ -20,7 +25,9 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.InfoCore">
+        android:theme="@style/Theme.InfoCore"
+        android:hardwareAccelerated="true"
+        android:extractNativeLibs="false">
 
         <activity
             android:name=".SplashActivity"
@@ -34,16 +41,36 @@
 
         <activity
             android:name=".MainActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:configChanges="orientation|screenSize|screenLayout"
+            android:windowSoftInputMode="adjustResize" />
 
         <activity
             android:name=".NetworkActivity"
-            android:exported="false" />
+            android:exported="false"
+            android:label="Network Diagnostics" />
 
         <activity
             android:name=".BugReportActivity"
             android:label="Submit Bug Report"
             android:exported="false" />
+
+        <receiver
+            android:name=".NotificationActionReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="STOP_MONITOR" />
+            </intent-filter>
+        </receiver>
+
+        <service
+            android:name=".TelemetryService"
+            android:foregroundServiceType="specialUse"
+            android:exported="false">
+            <property
+                android:name="android.app.PROPERTY_SPECIAL_USE_FGS_TYPE"
+                android:value="Real-time hardware safety monitoring. This service polls PMIC registers and thermal sensors to provide urgent alerts for device overheating and battery health degradation." />
+        </service>
 
     </application>
 </manifest>
