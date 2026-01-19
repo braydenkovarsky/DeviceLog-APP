@@ -24,9 +24,15 @@ class TelemetryService : Service() {
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        // 1. Create the initial notification
         startForeground(NOTIF_ID, createNotification("System: Monitoring", "Initializing...", null))
+
+        // 2. Start the telemetry loop
         handler.post(updateRunnable)
-        return START_STICKY
+
+        // CRITICAL FIX: Changed from START_STICKY to START_NOT_STICKY
+        // This prevents Android from auto-restarting the service after you terminate it.
+        return START_NOT_STICKY
     }
 
     private fun collectHardwareStats(): Bundle {
@@ -38,9 +44,19 @@ class TelemetryService : Service() {
         val pct = (level / scale.toFloat() * 100).toInt()
         val rawTemp = batteryIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
 
-        val rawCurrent = bm.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW).toDouble()
-        // Convert microAmps to milliAmps and ensure we get the absolute value for custom formatting
-        val currentmA = if (abs(rawCurrent) > 100000) abs(rawCurrent / 1000).toInt() else abs(rawCurrent).toInt()
+        // SAMSUNG PPS CALCULATION LOGIC
+        val rawCurrent = bm.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
+
+        // Detect uA vs mA scale (100k threshold)
+        var currentmA = if (abs(rawCurrent) > 100000) (rawCurrent / 1000).toInt() else rawCurrent.toInt()
+
+        // Force Polarity based on official status
+        val status = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
+        if (status == BatteryManager.BATTERY_STATUS_CHARGING) {
+            currentmA = abs(currentmA)
+        } else if (status == BatteryManager.BATTERY_STATUS_DISCHARGING) {
+            currentmA = -abs(currentmA)
+        }
 
         return Bundle().apply {
             putInt("PCT", pct)
@@ -57,31 +73,18 @@ class TelemetryService : Service() {
         val ma = data.getInt("MA")
         val isPlugged = data.getInt("PLUGGED") != 0
 
-        // 1. Determine Health Status for the Title
+        // Title based on thermal thresholds
         val healthStatus = when {
             tempRaw >= 450 -> "CRITICAL"
-            tempRaw >= 400 -> "BAD"
-            tempRaw >= 350 -> "POOR"
-            tempRaw >= 280 -> "GOOD"
-            else -> "EXCELLENT"
+            tempRaw >= 380 -> "WARM"
+            else -> "OPTIMAL"
         }
 
-        // 2. Charging Logic: Set Color and mA Prefix (+ or -)
-        val statusColor: String?
-        val maPrefix: String
-        val chargingLabel: String
+        val maPrefix = if (ma > 0) "+" else ""
+        val chargingLabel = if (isPlugged) "Charging" else "Discharging"
+        val statusColor = if (isPlugged) "#64FFDA" else null
 
-        if (isPlugged) {
-            statusColor = "#00E676" // Green for charging
-            maPrefix = "+"
-            chargingLabel = "Charging"
-        } else {
-            statusColor = null // No color for discharging (System default)
-            maPrefix = "-"
-            chargingLabel = "Discharging"
-        }
-
-        val title = "System: $healthStatus"
+        val title = "InfoCore: $healthStatus"
         val content = "$chargingLabel | $maPrefix$ma mA | $pct% | $tempC°C"
 
         val manager = getSystemService(NotificationManager::class.java)
@@ -92,6 +95,7 @@ class TelemetryService : Service() {
         val mainIntent = Intent(this, MainActivity::class.java)
         val mainPendingIntent = PendingIntent.getActivity(this, 0, mainIntent, PendingIntent.FLAG_IMMUTABLE)
 
+        // The Terminate action
         val stopIntent = Intent(this, NotificationActionReceiver::class.java).apply { action = "STOP_MONITOR" }
         val stopPendingIntent = PendingIntent.getBroadcast(this, 1, stopIntent, PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
 
@@ -105,20 +109,19 @@ class TelemetryService : Service() {
             .setContentIntent(mainPendingIntent)
             .addAction(android.R.drawable.ic_menu_close_clear_cancel, "TERMINATE", stopPendingIntent)
             .setPriority(NotificationCompat.PRIORITY_LOW)
+            .setVisibility(NotificationCompat.VISIBILITY_PUBLIC)
             .setForegroundServiceBehavior(NotificationCompat.FOREGROUND_SERVICE_IMMEDIATE)
 
-        // Only apply color if colorHex is not null
         if (colorHex != null) {
             builder.setColor(Color.parseColor(colorHex))
             builder.setColorized(true)
-        } else {
-            builder.setColorized(false) // Reverts to system standard
         }
 
         return builder.build()
     }
 
     override fun onDestroy() {
+        // Stop the loop immediately
         handler.removeCallbacks(updateRunnable)
         super.onDestroy()
     }

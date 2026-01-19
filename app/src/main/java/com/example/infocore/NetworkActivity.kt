@@ -296,17 +296,53 @@ class NetworkActivity : AppCompatActivity() {
     private fun updateRealTimeNetwork() {
         val cm = getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
         val caps = cm.getNetworkCapabilities(cm.activeNetwork)
+
         if (caps != null) {
             val isWifi = caps.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
-            tvConnectionType.text = "Link: ${if (isWifi) "Wi-Fi" else "Cellular"}"
+            val isCellular = caps.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+
+            tvConnectionType.text = when {
+                isWifi -> "Link: Wi-Fi"
+                isCellular -> "Link: Cellular"
+                else -> "Link: Ethernet/Other"
+            }
+
             if (isWifi) {
                 val wm = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
                 val rssi = wm.connectionInfo.rssi
-                tvSignal.text = "Signal: ${WifiManager.calculateSignalLevel(rssi, 100)}%"
+
+                // Map the RSSI to your requested labels
+                val status = getWifiSignalLabel(rssi)
+                tvSignal.text = "Signal: ${status.text}"
+                tvSignal.setTextColor(Color.parseColor(status.color))
+            } else if (isCellular) {
+                // Cellular logic: If active, we label it based on standard link stability
+                tvSignal.text = "Signal: GOOD"
+                tvSignal.setTextColor(Color.parseColor("#64FFDA"))
             }
+        } else {
+            // State when no network is active
+            tvSignal.text = "Signal: N/A"
+            tvSignal.setTextColor(Color.parseColor("#8E9AAF")) // Muted Grey
+            tvConnectionType.text = "Link: DISCONNECTED"
         }
     }
 
+    // Helper class to manage the UI state
+    data class SignalState(val text: String, val color: String)
+
+    private fun getWifiSignalLabel(rssi: Int): SignalState {
+        // Android's internal mapping: 0 to 4
+        val level = WifiManager.calculateSignalLevel(rssi, 5)
+
+        return when (level) {
+            4 -> SignalState("EXCELLENT", "#64FFDA") // Cyan
+            3 -> SignalState("GOOD", "#00E676")      // Green
+            2 -> SignalState("WEAK", "#FFB74D")      // Orange
+            1 -> SignalState("WEAK", "#FF5252")      // Red
+            else -> SignalState("N/A", "#8E9AAF")    // Grey
+        }
+    }
     private fun runPing(ip: String) {
         tvPingResult.text = "Polling..."
         progressPing.visibility = View.VISIBLE
