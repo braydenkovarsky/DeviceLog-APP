@@ -14,13 +14,6 @@
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
-    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
-
-    <uses-permission
-        android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
-        tools:ignore="ScopedStorage" />
-
     <application
         android:allowBackup="true"
         android:icon="@mipmap/ic_launcher"
@@ -28,13 +21,11 @@
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
         android:theme="@style/Theme.DeviceLog"
-
         android:hardwareAccelerated="true"
-
         android:extractNativeLibs="false">
 
         <activity
-            android:name="com.example.devicelog.SplashActivity"
+            android:name=".SplashActivity"
             android:exported="true"
             android:theme="@style/Theme.DeviceLog.Splash">
             <intent-filter>
@@ -44,23 +35,23 @@
         </activity>
 
         <activity
-            android:name="com.example.devicelog.MainActivity"
+            android:name=".MainActivity"
             android:exported="false"
             android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name="com.example.devicelog.NetworkActivity"
+            android:name=".NetworkActivity"
             android:exported="false"
             android:label="Network Diagnostics" />
 
         <activity
-            android:name="com.example.devicelog.BugReportActivity"
+            android:name=".BugReportActivity"
             android:label="Submit Bug Report"
             android:exported="false" />
 
         <receiver
-            android:name="com.example.devicelog.NotificationActionReceiver"
+            android:name=".NotificationActionReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="STOP_MONITOR" />
@@ -68,12 +59,12 @@
         </receiver>
 
         <service
-            android:name="com.example.devicelog.TelemetryService"
+            android:name=".TelemetryService"
             android:foregroundServiceType="specialUse"
             android:exported="false">
             <property
                 android:name="android.app.PROPERTY_SPECIAL_USE_FGS_TYPE"
-                android:value="Real-time hardware safety monitoring. This service polls PMIC registers and thermal sensors to provide urgent alerts for device overheating and battery health degradation." />
+                android:value="Real-time hardware safety monitoring. This service monitors RAM load, storage capacity, and thermal sensors to ensure system stability and provide alerts for overheating." />
         </service>
 
     </application>
