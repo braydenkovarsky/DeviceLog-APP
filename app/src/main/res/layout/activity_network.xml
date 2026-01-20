@@ -8,19 +8,17 @@
     android:background="#0F111A">
 
     <LinearLayout
+        android:id="@+id/mainDashboardContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:orientation="vertical">
-
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="32dp" />
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:paddingHorizontal="12dp"
-            android:paddingVertical="8dp"
+            android:paddingTop="32dp"
+            android:paddingBottom="8dp"
             android:orientation="vertical">
 
             <LinearLayout
@@ -202,7 +200,8 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:text="No history logs yet."
-                        android:textColor="#B0BEC5" />
+                        android:textColor="#B0BEC5"
+                        android:fontFamily="monospace"/>
                 </LinearLayout>
 
                 <LinearLayout
@@ -243,17 +242,22 @@
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigationView"
-        android:layout_width="260dp"
-        android:layout_height="match_parent"
+        android:layout_width="200dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="start"
-        android:background="#1A1C26"
-        android:paddingTop="40dp"
-        app:itemIconPadding="24dp"
-        app:itemIconTint="#64FFDA"
-        app:itemTextColor="@android:color/white"
+        android:layout_marginTop="75dp"
+        android:layout_marginStart="16dp"
+        android:background="@drawable/hud_blade_bg"
+        app:insetForeground="@android:color/transparent"
+        app:elevation="12dp"
+        app:headerLayout="@null"
         app:itemVerticalPadding="12dp"
-        app:itemShapeInsetStart="12dp"
-        app:itemShapeInsetEnd="12dp"
+        app:itemIconPadding="16dp"
+        app:itemIconTint="#64FFDA"
+        app:itemTextColor="#FFFFFF"
+        app:itemShapeFillColor="#1564FFDA"
+        app:itemShapeInsetStart="8dp"
+        app:itemShapeInsetEnd="8dp"
         app:itemShapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"
         app:menu="@menu/nav_menu" />
 

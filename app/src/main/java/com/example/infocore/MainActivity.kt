@@ -11,6 +11,7 @@ import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.*
 import android.webkit.WebView
+import android.view.View
 import android.widget.Button
 import android.widget.ProgressBar
 import android.widget.TextView
@@ -45,6 +46,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navView: NavigationView
     private lateinit var topAppBar: MaterialToolbar
     private lateinit var btnOpenNetwork: Button
+    private lateinit var mainDashboardContainer: View // For Master Design Scaling
 
     private var sessionStartTime = 0L
     private val CALCULATION_DURATION = 2000L
@@ -62,11 +64,9 @@ class MainActivity : AppCompatActivity() {
     private val requestPermissionLauncher = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
-        // Logic: If granted, start the service. If not, just stay silent.
         if (isGranted) {
             startTelemetryService()
         }
-        // Toast removed to prevent user interruption
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,16 +76,15 @@ class MainActivity : AppCompatActivity() {
         sessionStartTime = SystemClock.elapsedRealtime()
 
         initViews()
+        setupMasterAnimations() // Added Drop-down & Scale Logic
         createNotificationChannels()
         checkNotificationPermission()
         populateFooterInfo()
 
-        // Ensure service starts immediately
         startTelemetryService()
     }
 
     private fun startTelemetryService() {
-        // Ensure you have a valid TelemetryService class created in your project
         val serviceIntent = Intent(this, TelemetryService::class.java)
         ContextCompat.startForegroundService(this, serviceIntent)
     }
@@ -94,6 +93,7 @@ class MainActivity : AppCompatActivity() {
         drawerLayout = findViewById(R.id.drawerLayout)
         navView = findViewById(R.id.navigationView)
         topAppBar = findViewById(R.id.topAppBar)
+        mainDashboardContainer = findViewById(R.id.mainDashboardContainer) // The dashboard content
         tvBattery = findViewById(R.id.tvBattery)
         batteryProgress = findViewById(R.id.batteryProgress)
         tvRam = findViewById(R.id.tvRam)
@@ -112,8 +112,10 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, NetworkActivity::class.java))
         }
 
+        // Professional Ordered Listener
         navView.setNavigationItemSelectedListener {
             when (it.itemId) {
+                R.id.nav_dashboard -> drawerLayout.closeDrawers()
                 R.id.nav_network -> startActivity(Intent(this, NetworkActivity::class.java))
                 R.id.menuInfo -> showAboutDialog()
                 R.id.menuPrivacy -> showPrivacyPolicyDialog()
@@ -123,58 +125,86 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- CRITICAL FIX: Robust mA calculation & Metrics Update ---
+    /**
+     * MASTER DESIGN: Smooth Drop-Down & Dashboard Scaling
+     */
+    private fun setupMasterAnimations() {
+        // PRE-POSITION: Tuck it away perfectly
+        navView.post {
+            navView.pivotX = 0f
+            navView.pivotY = 0f
+            navView.translationY = -200f
+            navView.alpha = 0f
+        }
+
+        drawerLayout.addDrawerListener(object : DrawerLayout.SimpleDrawerListener() {
+            override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
+                super.onDrawerSlide(drawerView, slideOffset)
+
+                // math: slideOffset 0.0 -> 1.0
+                // Using a "Bounce-Out" logic:
+                val dropFactor = 1f - (1f - slideOffset) * (1f - slideOffset)
+
+                // The menu drops 200px and scales from 85% to 100%
+                drawerView.translationY = (dropFactor - 1) * 200f
+                drawerView.alpha = slideOffset
+                drawerView.scaleX = 0.85f + (0.15f * dropFactor)
+                drawerView.scaleY = 0.85f + (0.15f * dropFactor)
+
+                // Dashboard Reaction:
+                // Instead of moving the whole screen, we add a "Blur" dimming effect
+                mainDashboardContainer.alpha = 1f - (slideOffset * 0.4f)
+                mainDashboardContainer.translationX = slideOffset * 30f // Subtle push
+            }
+
+            override fun onDrawerClosed(drawerView: View) {
+                super.onDrawerClosed(drawerView)
+                mainDashboardContainer.translationX = 0f
+                mainDashboardContainer.alpha = 1f
+            }
+        })
+    }
     private fun refreshDisplay() {
         val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
         val batteryIntent = registerReceiver(null, IntentFilter(Intent.ACTION_BATTERY_CHANGED))
 
-        // 1. GET RAW SENSOR DATA (Samsung HAL reports in Microamps)
         val rawCurrentMicroAmps = bm.getLongProperty(BatteryManager.BATTERY_PROPERTY_CURRENT_NOW)
 
-        // 2. CONVERT TO MILLIAMPS (Official Samsung Conversion)
-        // We use 100,000 as a pivot. If it's larger, it's microamps.
-        // If it's smaller, the kernel already converted it for us.
         var currentmA = if (abs(rawCurrentMicroAmps) > 100000) {
             (rawCurrentMicroAmps / 1000).toInt()
         } else {
             rawCurrentMicroAmps.toInt()
         }
 
-        // 3. READ OFFICIAL SYSTEM STATUS
         val status = batteryIntent?.getIntExtra(BatteryManager.EXTRA_STATUS, -1) ?: -1
         val plugged = batteryIntent?.getIntExtra(BatteryManager.EXTRA_PLUGGED, -1) ?: -1
         val isCharging = status == BatteryManager.BATTERY_STATUS_CHARGING ||
                 status == BatteryManager.BATTERY_STATUS_FULL
 
-        // 4. POLARITY ENFORCEMENT (Samsung Diagnostic Standard)
-        // This ensures that even if the sensor is "noisy," the UI remains accurate.
         if (isCharging) {
             currentmA = abs(currentmA)
         } else {
             currentmA = -abs(currentmA)
         }
 
-        // 5. CLASSIFY CHARGING TYPE BASED ON PPS SPECS
         var label = "Discharging"
-        var color = "#FF5252" // Alert Red
+        var color = "#FF5252"
 
         if (plugged != 0) {
             label = when {
-                currentmA >= 3500 -> "Super Fast Charging 2.0" // 45W Tier
-                currentmA >= 2000 -> "Super Fast Charging"     // 25W Tier
-                currentmA >= 1000 -> "Fast Charging"            // 15W Tier
-                currentmA > 0 -> "Cable Charging"               // Standard USB
+                currentmA >= 3500 -> "Super Fast Charging 2.0"
+                currentmA >= 2000 -> "Super Fast Charging"
+                currentmA >= 1000 -> "Fast Charging"
+                currentmA > 0 -> "Cable Charging"
                 else -> "Idle / Full"
             }
             color = if (currentmA > 500) "#64FFDA" else "#FFB74D"
         }
 
-        // 6. UPDATE UI ELEMENTS
         tvChargingSpeed.text = if (currentmA > 0) "+$currentmA mA" else "$currentmA mA"
         tvChargingType.text = label
         tvChargingType.setTextColor(Color.parseColor(color))
 
-        // Basic Metrics
         val level = batteryIntent?.getIntExtra(BatteryManager.EXTRA_LEVEL, -1) ?: 0
         val scale = batteryIntent?.getIntExtra(BatteryManager.EXTRA_SCALE, -1) ?: 100
         val rawTemp = batteryIntent?.getIntExtra(BatteryManager.EXTRA_TEMPERATURE, 0) ?: 0
@@ -183,7 +213,6 @@ class MainActivity : AppCompatActivity() {
         batteryProgress.progress = (level * 100 / scale.toFloat()).toInt()
         tvTemperature.text = "${rawTemp / 10.0}°C"
 
-        // System Refresh
         tvRam.text = "${getRamUsage()}%"
         tvStorage.text = "${getStorageUsage()}%"
         tvUptime.text = getUptime()
@@ -191,21 +220,20 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun updateHealthWarnings(temp: Int) {
-        // Temperature is in tenths of a degree (380 = 38.0C)
         when {
-            temp >= 450 -> { // 45.0 C
+            temp >= 450 -> {
                 tvDeviceHealthStatus.text = "CRITICAL"
-                tvDeviceHealthStatus.setTextColor(Color.parseColor("#FF1744")) // Bright Red
+                tvDeviceHealthStatus.setTextColor(Color.parseColor("#FF1744"))
                 tvPerformanceTips.text = "System is throttling to prevent damage."
             }
-            temp >= 380 -> { // 38.0 C
+            temp >= 380 -> {
                 tvDeviceHealthStatus.text = "WARM"
-                tvDeviceHealthStatus.setTextColor(Color.parseColor("#FFEA00")) // Yellow
+                tvDeviceHealthStatus.setTextColor(Color.parseColor("#FFEA00"))
                 tvPerformanceTips.text = "High CPU load. Charging may slow down."
             }
             else -> {
                 tvDeviceHealthStatus.text = "OPTIMAL"
-                tvDeviceHealthStatus.setTextColor(Color.parseColor("#64FFDA")) // Teal
+                tvDeviceHealthStatus.setTextColor(Color.parseColor("#64FFDA"))
                 tvPerformanceTips.text = "System performing within normal parameters."
             }
         }

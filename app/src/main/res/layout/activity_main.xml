@@ -1,4 +1,3 @@
-<?xml version="1.0" encoding="utf-8"?>
 <androidx.drawerlayout.widget.DrawerLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -10,6 +9,7 @@
     tools:context=".MainActivity">
 
     <ScrollView
+        android:id="@+id/mainDashboardContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:fillViewport="true">
@@ -247,18 +247,22 @@
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigationView"
-        android:layout_width="260dp"
-        android:layout_height="match_parent"
+        android:layout_width="190dp"
+        android:layout_height="wrap_content"
         android:layout_gravity="start"
-        android:background="#1A1C26"
-        android:paddingTop="40dp"
-        app:itemIconPadding="24dp"
+        android:layout_marginTop="70dp"
+        android:layout_marginStart="12dp"
+        android:background="@drawable/hud_blade_bg"
+        app:insetForeground="@android:color/transparent"
+        app:elevation="12dp"
+        app:headerLayout="@null"
+        app:itemVerticalPadding="10dp"
+        app:itemIconPadding="14dp"
         app:itemIconTint="#64FFDA"
-        app:itemTextColor="@android:color/white"
-        app:itemVerticalPadding="12dp"
-        app:itemShapeInsetStart="12dp"
-        app:itemShapeInsetEnd="12dp"
-        app:itemShapeAppearanceOverlay="@style/ShapeAppearance.MaterialComponents.MediumComponent"
+        app:itemTextColor="#FFFFFF"
+        app:itemShapeFillColor="#1564FFDA"
+        app:itemShapeInsetStart="6dp"
+        app:itemShapeInsetEnd="6dp"
+        app:itemShapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
         app:menu="@menu/nav_menu" />
-
 </androidx.drawerlayout.widget.DrawerLayout>
