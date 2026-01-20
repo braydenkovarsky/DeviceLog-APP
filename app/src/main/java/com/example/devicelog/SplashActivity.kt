@@ -1,4 +1,4 @@
-package com.example.infocore
+package com.example.devicelog
 
 import android.content.Intent
 import android.os.Bundle

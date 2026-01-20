@@ -24,7 +24,7 @@
                 android:id="@+id/topAppBar"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                app:title="InfoCore"
+                app:title="DeviceLog"
                 app:titleTextColor="@android:color/white"
                 app:navigationIcon="@drawable/ic_menu"
                 app:navigationIconTint="@android:color/white" />

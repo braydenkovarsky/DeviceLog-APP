@@ -1,12 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.InfoCore.Splash" parent="Theme.SplashScreen">
+    <style name="Theme.DeviceLog.Splash" parent="Theme.SplashScreen">
         <item name="windowSplashScreenBackground">#0F111A</item>
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher</item>
-        <item name="postSplashScreenTheme">@style/Theme.InfoCore</item>
+        <item name="postSplashScreenTheme">@style/Theme.DeviceLog</item>
     </style>
 
-    <style name="Theme.InfoCore" parent="Theme.Material3.DayNight.NoActionBar">
+    <style name="Theme.DeviceLog" parent="Theme.Material3.DayNight.NoActionBar">
         <item name="android:statusBarColor">@android:color/transparent</item>
     </style>
 </resources>

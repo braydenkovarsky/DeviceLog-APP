@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    package="com.example.infocore">
+    package="com.example.devicelog">
 
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
 
@@ -15,6 +16,7 @@
 
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+
     <uses-permission
         android:name="android.permission.MANAGE_EXTERNAL_STORAGE"
         tools:ignore="ScopedStorage" />
@@ -25,14 +27,16 @@
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.InfoCore"
+        android:theme="@style/Theme.DeviceLog"
+
         android:hardwareAccelerated="true"
+
         android:extractNativeLibs="false">
 
         <activity
-            android:name=".SplashActivity"
+            android:name="com.example.devicelog.SplashActivity"
             android:exported="true"
-            android:theme="@style/Theme.InfoCore.Splash">
+            android:theme="@style/Theme.DeviceLog.Splash">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -40,23 +44,23 @@
         </activity>
 
         <activity
-            android:name=".MainActivity"
+            android:name="com.example.devicelog.MainActivity"
             android:exported="false"
-            android:configChanges="orientation|screenSize|screenLayout"
+            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden"
             android:windowSoftInputMode="adjustResize" />
 
         <activity
-            android:name=".NetworkActivity"
+            android:name="com.example.devicelog.NetworkActivity"
             android:exported="false"
             android:label="Network Diagnostics" />
 
         <activity
-            android:name=".BugReportActivity"
+            android:name="com.example.devicelog.BugReportActivity"
             android:label="Submit Bug Report"
             android:exported="false" />
 
         <receiver
-            android:name=".NotificationActionReceiver"
+            android:name="com.example.devicelog.NotificationActionReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="STOP_MONITOR" />
@@ -64,7 +68,7 @@
         </receiver>
 
         <service
-            android:name=".TelemetryService"
+            android:name="com.example.devicelog.TelemetryService"
             android:foregroundServiceType="specialUse"
             android:exported="false">
             <property

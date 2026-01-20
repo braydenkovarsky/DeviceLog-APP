@@ -34,7 +34,7 @@
                     android:background="#0F111A"
                     app:navigationIcon="@drawable/ic_menu"
                     app:navigationIconTint="@android:color/white"
-                    app:title="InfoCore"
+                    app:title="DeviceLog"
                     app:titleTextColor="@android:color/white"
                     app:titleTextAppearance="@style/TextAppearance.MaterialComponents.Headline6" />
             </LinearLayout>
