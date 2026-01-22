@@ -98,7 +98,7 @@ class BugReportActivity : AppCompatActivity() {
     }
 
     private fun dispatchDirectlyToEmail(cat: String, steps: String, exp: String, notes: String) {
-        val emailRecipient = "braydenkovarsky@gmail.com"
+        val emailRecipient = "fosomstudios@gmail.com"
         val emailSubject = "BUG REPORT: $cat"
         val emailBody = """
             ==================================================

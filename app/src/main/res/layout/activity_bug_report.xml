@@ -169,7 +169,7 @@
             android:id="@+id/btnSendReport"
             android:layout_width="match_parent"
             android:layout_height="65dp"
-            android:text="AUTHORIZE &amp; DISPATCH"
+            android:text="Send Report"
             android:backgroundTint="#64FFDA"
             android:textColor="#0A0C14"
             android:textStyle="bold"
