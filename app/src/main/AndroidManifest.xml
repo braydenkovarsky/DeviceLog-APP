@@ -8,10 +8,8 @@
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE"/>
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
-
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
-
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
     <application
@@ -23,6 +21,10 @@
         android:theme="@style/Theme.DeviceLog"
         android:hardwareAccelerated="true"
         android:extractNativeLibs="false">
+
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-2319619504777034~5745186548"/>
 
         <activity
             android:name=".SplashActivity"
