@@ -191,117 +191,113 @@ class NetworkActivity : AppCompatActivity() {
     }
 
     private fun showAboutDialog() {
-        // We defined this detailed string to serve as the 'Technical Whitepaper' for the app.
-        // Human reviewers often check this to ensure the app's claims match its requested permissions.
         val aboutMessage = """
-    DeviceLog INTERFACE
-    Build Version: 1.0 (Stable)
-    Terminal Revision: 2026.4
-    Architecture: Samsung HAL-Optimized (AArch64)
+    DEVICELOG TERMINAL CORE v1.0.4 
+    Revision: 2026.01.22 | Build Architecture: API 35 (Android 16)
     
-    1. ARCHITECTURAL OVERVIEW
-    DeviceLog is engineered to bridge the gap between kernel-level telemetry and user-facing analytics. We added direct HAL (Hardware Abstraction Layer) interfacing to synthesize metrics regarding electrical and thermal states.
-    
-    2. THERMAL MATRIX & DVFS LOGIC
-    The system is calibrated to track Samsung Dynamic Thermal Guard (DTG) trigger points. We added this to monitor where the OS initiates DVFS throttling:
-    - Soft Throttle: 38°C (100.4°F)
-    - Emergency Protective State: 45°C (113°F)
-    
-    3. POWER DELIVERY & PPS HANDSHAKE
-    We added logic to detect digital handshakes between the device and charging controllers. This distinguishes between authentic OEM chargers and generic adapters via the PPS protocol.
-    
-    4. DATA SAFETY & PRIVACY COMPLIANCE
-    All telemetry data is processed exclusively in volatile memory (RAM). We added a 'Zero-Persistence' rule: no hardware data is ever stored on the disk or transmitted to external servers.
+    1. ANDROID MANIFEST: PERMISSION & COMPONENT LOGIC
+    • INTERNET: Authorized for high-frequency handshakes with AdMob bidding clusters and fetching hardware-ID JSON data.
+    • ACCESS_NETWORK_STATE & ACCESS_WIFI_STATE: Monitors diagnostic path stability to ensure telemetry data packets are not dropped during hardware stress tests.
+    • FOREGROUND_SERVICE & FOREGROUND_SERVICE_SPECIAL_USE: As per API 35 standards, this allows the "TelemetryService" to bypass standard OS throttling, ensuring thermal and RAM monitoring remains active to prevent hardware damage.
+    • WAKE_LOCK: This is the "Zero-Gap" protocol. It prevents the CPU from entering deep sleep specifically when the device hits 100% capacity, ensuring "Trickle Charge" phase logging is 100% accurate.
+    • POST_NOTIFICATIONS: Required for transparency, allowing the system to maintain a persistent hardware-status overlay in the tray.
+
+    2. BUILD GRADLE: ENGINE ARCHITECTURE
+    • Kotlin 2.1.0: Upgraded compiler to handle the metadata requirements of the Google Ads SDK 24.9.0.
+    • SDK 35: Compiled for Android 16 (2026) for maximum compatibility with modern hardware.
+    • R8/Proguard: Utilizes code shrinking to protect telemetry algorithms and reduce the engine footprint.
+
+    3. FLATICON FREE LICENSE (MANDATORY ATTRIBUTION)
+    This software is attributed to its authors as per the license requirements:
+    • License Type: Free License (With Attribution).
+    • Interface Icons: "Designed by Pixel perfect from Flaticon".
+    • Switch/Button Assets: "Designed by Freepik from Flaticon".
+    • Usage Scope: Software, applications, mobile, and multimedia.
+    • Rights: We hold a non-exclusive, non-transferable right to use these materials worldwide.
+    • Legal: The original 'license.pdf' is embedded in the application assets folder for regulatory verification.
+
+    4. DATA INTEGRITY (ZERO-PERSISTENCE RULE)
+    All metrics (RAM, Thermal, Amperage) are processed in volatile memory (RAM). No logs are ever written to internal storage or transmitted to external servers.
 """.trimIndent()
 
         AlertDialog.Builder(this)
-            .setTitle("System Documentation")
+            .setTitle("Advanced System & Legal Manifest")
             .setMessage(aboutMessage)
             .setPositiveButton("Dismiss", null)
-            .setNeutralButton("Submit Bug") { _, _ ->
-                // We wrapped this in a try-catch to prevent a crash if the BugReportActivity
-                // is stripped out by ProGuard (R8) optimization.
-                try {
-                    startActivity(Intent(this, BugReportActivity::class.java))
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Bug Reporter not found in this build.", Toast.LENGTH_SHORT).show()
-                }
-            }
+            .setNeutralButton("View License PDF") { _, _ -> openLicensePdf() }
             .show()
     }
 
     private fun showPrivacyPolicyDialog() {
-        // We added specific security settings to this WebView.
-        // Google rejects apps that leave WebViews vulnerable to Cross-Site Scripting (XSS).
         val webView = WebView(this).apply {
-            settings.apply {
-                // We disabled JavaScript because a static Privacy Policy does not need it.
-                // This prevents hackers from injecting scripts into your app.
-                javaScriptEnabled = false
-
-                // We disabled file access so the WebView cannot 'reach out' and
-                // read other private files on the user's phone.
-                allowFileAccess = false
-                allowContentAccess = false
-
-                // We added a restriction to only allow encrypted (HTTPS) content.
-                mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
-            }
+            settings.javaScriptEnabled = false
         }
-
-        val htmlContent = getProfessionalPrivacyHtml()
-        webView.loadDataWithBaseURL(null, htmlContent, "text/html", "UTF-8", null)
-
-        AlertDialog.Builder(this)
-            .setTitle("Privacy & Security Protocol")
-            .setView(webView)
-            .setPositiveButton("Acknowledge", null)
-            .show()
+        webView.loadDataWithBaseURL(null, getProfessionalPrivacyHtml(), "text/html", "UTF-8", null)
+        AlertDialog.Builder(this).setTitle("Privacy Protocol").setView(webView).setPositiveButton("Acknowledge", null).show()
     }
+
     private fun getProfessionalPrivacyHtml(): String {
-        // We utilized a CSS-styled HTML string to create a professional, 'System-Grade' feel.
-        // This looks better to reviewers than plain text and shows attention to detail.
         return """
 <html>
 <head>
 <style>
-    body { background-color:#06080A; color:#8E9AAF; padding:30px; font-family: sans-serif; line-height:1.6; font-size: 13px; }
-    .header { border-bottom: 1px solid #1E293B; padding-bottom: 20px; margin-bottom: 30px; }
-    h1 { color:#F8FAFC; font-size: 20px; margin:0; font-weight: 700; }
-    .revision { color: #64FFDA; font-family: monospace; font-size: 11px; margin-top: 5px; }
-    h2 { color:#F1F5F9; font-size: 13px; margin-top: 30px; text-transform: uppercase; border-left: 3px solid #64FFDA; padding-left: 10px; }
-    .perm-tag { color: #64FFDA; font-family: monospace; font-weight: bold; }
-    .footer { margin-top: 50px; padding-top: 20px; border-top: 1px solid #1E293B; font-size: 10px; color: #475569; font-family: monospace; }
+    body { background-color:#06080A; color:#8E9AAF; padding:25px; font-family: sans-serif; line-height:1.8; font-size: 13px; }
+    h1 { color:#F8FAFC; font-size: 18px; border-bottom: 2px solid #1E293B; padding-bottom:8px; margin-bottom: 20px; }
+    h2 { color:#64FFDA; font-size: 12px; margin-top: 25px; text-transform: uppercase; border-left: 3px solid #64FFDA; padding-left: 10px; }
+    p { margin-bottom: 12px; }
+    .ad-box { border: 1px dashed #64FFDA; padding: 15px; background: rgba(100, 255, 218, 0.05); margin: 20px 0; border-radius: 4px; }
+    .footer { font-family:monospace; margin-top:30px; color:#475569; font-size: 10px; text-align: center; }
 </style>
 </head>
 <body>
-    <div class="header">
-        <h1>Data Integrity & Privacy Protocol</h1>
-        <div class="revision">REVISION: 2026.1.1 // LOCAL_VOLATILE_ONLY</div>
+    <h1>Privacy & Security Protocol</h1>
+    
+    <h2>1.0 Licensing & Asset Attribution</h2>
+    <p>This application complies with the <b>Flaticon Free License</b>. We acknowledge that the graphical assets used for monitoring switches and system icons were designed by <b>Pixel perfect</b> and <b>Freepik</b>. We exercise our non-exclusive, world-wide right to use these licensed materials an unlimited number of times within this mobile software.</p>
+    
+    <div class="ad-box">
+        <h2>2.0 Advertising Disclosure (AdMob)</h2>
+        <p>Google AdMob (v24.9.0) is integrated for monetization. Google may collect the Advertising ID (AAID) to serve relevant ads. Telemetry metrics are strictly isolated and are never shared with the ad engine.</p>
     </div>
 
-    <h2>1.0 System Architecture</h2>
-    <p><b>DeviceLog</b> is engineered as a Closed-Loop Utility. We added a Volatility Framework ensuring all telemetry is confined to RAM. No session data remains once the process is terminated.</p>
+    <h2>3.0 Manifest & Permission Justification</h2>
+    <p>The app requests <b>FOREGROUND_SERVICE_SPECIAL_USE</b> for real-time hardware monitoring. <b>WAKE_LOCK</b> is utilized specifically during the "Trickle Charge" phase (100% capacity) to prevent data gaps during charging stability analysis.</p>
 
-    <h2>2.0 Permission Logic (Disclosure)</h2>
-    <p>We added the following declarations to ensure full system transparency:</p>
-    <ul>
-        <li><span class="perm-tag">MANAGE_EXTERNAL_STORAGE:</span> Added for block-level NAND analysis. We use this to calculate partition health without accessing private user media files.</li>
-        <li><span class="perm-tag">FOREGROUND_SERVICE_SPECIAL_USE:</span> Added to maintain the 1Hz sensor polling frequency. This prevents the system from 'throtlling' safety monitors when the screen is off.</li>
-        <li><span class="perm-tag">INTERNET:</span> Solely for verifying hardware nomenclature against verified manufacturer databases via TLS 1.3 encryption.</li>
-    </ul>
-
-    <h2>3.0 Zero-Persistence Policy</h2>
-    <p>We added a 1000ms overwrite cycle. Every second, the previous state is purged from memory, ensuring zero forensic footprint of your device usage.</p>
+    <h2>4.0 Terms of Usage</h2>
+    <p>Per the license, we do not sublicense, sell, or rent these visual assets. We may alter and create derivative works to fit the application's aesthetic. The full license certificate is embedded within the application's assets folder (license.pdf).</p>
 
     <div class="footer">
-        PROTOCOL: HTTPS_TLS_1.3_ACTIVE<br>
-        BUILD: 1.1.2_STABLE<br>
-        SAMSUNG_HAL: OPTIMIZED
+        DOCUMENT: DL-2026-REV-D | COMPLIANCE: API_35 / KOTLIN_2.1.0<br>
+        VERIFIED: VOLATILE_MEMORY_ONLY
     </div>
 </body>
 </html>
 """.trimIndent()
+    }
+
+    private fun openLicensePdf() {
+        try {
+            val assetManager = assets
+            val inputStream = assetManager.open("license.pdf")
+            val file = java.io.File(cacheDir, "license.pdf")
+
+            inputStream.use { input ->
+                file.outputStream().use { output ->
+                    input.copyTo(output)
+                }
+            }
+
+            val contentUri = androidx.core.content.FileProvider.getUriForFile(
+                this, "${packageName}.provider", file
+            )
+
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.setDataAndType(contentUri, "application/pdf")
+            intent.flags = Intent.FLAG_GRANT_READ_URI_PERMISSION
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "Unable to open license: ${e.message}", Toast.LENGTH_LONG).show()
+        }
     }
 
     private fun runPing(ip: String) {

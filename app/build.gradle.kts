@@ -1,13 +1,10 @@
 plugins {
-    // Standard plugins required for Android-specific build tasks and Kotlin-to-JVM compilation.
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
 }
 
 android {
     namespace = "com.example.devicelog"
-
-    // Target API 35 is mandatory for Play Store releases in 2026.
     compileSdk = 35
 
     defaultConfig {
@@ -22,12 +19,8 @@ android {
 
     buildTypes {
         release {
-            // R8 Obfuscation: Protects your telemetry logic and charging-state algorithms.
             isMinifyEnabled = true
-
-            // Resource Shrinking: Reduces APK size to improve download rates.
             isShrinkResources = true
-
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -36,28 +29,29 @@ android {
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        // Updated to 21 for better 2026 compatibility
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
 
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = "21"
     }
 }
 
 dependencies {
     // --- ADMOB INTEGRATION ---
-    // This allows your App ID and Unit ID to communicate with Google's ad servers.
     implementation("com.google.android.gms:play-services-ads:24.9.0")
+
+    // --- UPDATED FOR KOTLIN 2.1.0+ COMPATIBILITY ---
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.10.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.1")
 
     // --- EXISTING TELEMETRY & UI LIBS ---
     implementation("androidx.core:core-splashscreen:1.0.1")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.7.3")
-    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
     implementation("com.github.bumptech.glide:glide:4.15.1")
-    implementation("com.google.android.material:material:1.11.0")
+    implementation("com.google.android.material:material:1.12.0") // Updated for API 35
 
-    // --- ANDROIDX CORE ---
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
     implementation(libs.androidx.activity)

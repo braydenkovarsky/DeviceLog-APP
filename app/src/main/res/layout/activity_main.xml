@@ -8,255 +8,271 @@
     android:background="#0F111A"
     tools:context=".MainActivity">
 
-    <ScrollView
-        android:id="@+id/mainDashboardContainer"
+    <RelativeLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fillViewport="true">
+        android:layout_height="match_parent">
 
-        <LinearLayout
+        <ScrollView
+            android:id="@+id/mainDashboardContainer"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:layout_above="@+id/adView"
+            android:fillViewport="true">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <com.google.android.material.appbar.MaterialToolbar
+                    android:id="@+id/topAppBar"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    app:title="DeviceLog"
+                    app:titleTextColor="@android:color/white"
+                    app:navigationIcon="@drawable/ic_menu"
+                    app:navigationIconTint="@android:color/white" />
+
+                <TextView
+                    android:id="@+id/tvNotificationWarning"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:padding="12dp"
+                    android:layout_marginTop="8dp"
+                    android:text="Real-time background monitoring status"
+                    android:textAlignment="center"
+                    android:textStyle="bold"
+                    android:textSize="13sp"
+                    android:fontFamily="monospace"
+                    android:visibility="visible" />
+
+                <FrameLayout
+                    android:layout_width="220dp"
+                    android:layout_height="220dp"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="20dp"
+                    android:background="@drawable/circular_glow_bg">
+
+                    <ProgressBar
+                        android:id="@+id/batteryProgress"
+                        style="?android:attr/progressBarStyleHorizontal"
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:indeterminate="false"
+                        android:progress="0"
+                        android:progressDrawable="@drawable/circular_progress_bar" />
+
+                    <LinearLayout
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:gravity="center"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/tvChargingType"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="ANALYZING"
+                            android:textColor="#B0BEC5"
+                            android:textSize="10sp"
+                            android:textAllCaps="true" />
+
+                        <TextView
+                            android:id="@+id/tvBattery"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0%"
+                            android:textColor="@android:color/white"
+                            android:textSize="42sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/tvChargingSpeed"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0.00 W"
+                            android:textColor="#64FFDA"
+                            android:textSize="18sp"
+                            android:fontFamily="monospace"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </FrameLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="30dp"
+                    android:orientation="horizontal">
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="100dp"
+                        android:layout_weight="1"
+                        android:layout_margin="4dp"
+                        android:background="@drawable/glass_card_selected"
+                        android:gravity="center"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="RAM Load"
+                            android:textColor="#B0BEC5"
+                            android:textSize="12sp" />
+                        <TextView
+                            android:id="@+id/tvRam"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0%"
+                            android:textColor="@android:color/white"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="100dp"
+                        android:layout_weight="1"
+                        android:layout_margin="4dp"
+                        android:background="@drawable/glass_card_selected"
+                        android:gravity="center"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Storage"
+                            android:textColor="#B0BEC5"
+                            android:textSize="12sp" />
+                        <TextView
+                            android:id="@+id/tvStorage"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0%"
+                            android:textColor="@android:color/white"
+                            android:textSize="18sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="100dp"
+                        android:layout_weight="1"
+                        android:layout_margin="4dp"
+                        android:background="@drawable/glass_card_selected"
+                        android:gravity="center"
+                        android:orientation="vertical">
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Uptime"
+                            android:textColor="#B0BEC5"
+                            android:textSize="12sp" />
+                        <TextView
+                            android:id="@+id/tvUptime"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0h 0m"
+                            android:textColor="@android:color/white"
+                            android:textSize="14sp"
+                            android:textStyle="bold" />
+                    </LinearLayout>
+                </LinearLayout>
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="24dp"
+                    android:orientation="vertical">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Real-Time Health"
+                        android:textColor="@android:color/white"
+                        android:textSize="18sp"
+                        android:layout_marginBottom="12dp"/>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+                        <ImageView
+                            android:layout_width="24dp"
+                            android:layout_height="24dp"
+                            android:src="@drawable/ic_temp"
+                            app:tint="#64FFDA" />
+                        <TextView
+                            android:id="@+id/tvDeviceHealthStatus"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="8dp"
+                            android:text="Excellent"
+                            android:textColor="#64FFDA"
+                            android:textStyle="bold" />
+                        <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
+                        <TextView
+                            android:id="@+id/tvTemperature"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0.0°C"
+                            android:textColor="@android:color/white" />
+                    </LinearLayout>
+
+                    <View
+                        android:layout_width="match_parent"
+                        android:layout_height="4dp"
+                        android:layout_marginTop="8dp"
+                        android:background="@drawable/health_bar_gradient" />
+
+                    <TextView
+                        android:id="@+id/tvPerformanceTips"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:text="All systems operating at peak efficiency."
+                        android:textColor="#B0BEC5"
+                        android:textSize="12sp" />
+                </LinearLayout>
+
+                <Button
+                    android:id="@+id/btnOpenNetwork"
+                    android:layout_width="match_parent"
+                    android:layout_height="56dp"
+                    android:layout_marginTop="32dp"
+                    android:text="Open Network Monitor"
+                    android:textAllCaps="false"
+                    android:backgroundTint="#1AFFFFFF"
+                    app:strokeColor="#4DD8FF"
+                    app:strokeWidth="1dp"
+                    android:textColor="@android:color/white"
+                    app:cornerRadius="28dp" />
+
+                <TextView
+                    android:id="@+id/tvFooterInfo"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="40dp"
+                    android:layout_marginBottom="20dp"
+                    android:gravity="center"
+                    android:text="InfoCore Advanced Telemetry • Loading Hardware ID..."
+                    android:textColor="#546E7A"
+                    android:textSize="11sp" />
+
+            </LinearLayout>
+        </ScrollView>
+
+        <com.google.android.gms.ads.AdView
+            android:id="@+id/adView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="vertical"
-            android:padding="20dp">
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true"
+            app:adSize="BANNER"
+            app:adUnitId="ca-app-pub-2319619504777034/1167469670" />
 
-            <com.google.android.material.appbar.MaterialToolbar
-                android:id="@+id/topAppBar"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                app:title="DeviceLog"
-                app:titleTextColor="@android:color/white"
-                app:navigationIcon="@drawable/ic_menu"
-                app:navigationIconTint="@android:color/white" />
-
-            <TextView
-                android:id="@+id/tvNotificationWarning"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:padding="12dp"
-                android:layout_marginTop="8dp"
-                android:text="Real-time background monitoring status"
-                android:textAlignment="center"
-                android:textStyle="bold"
-                android:textSize="13sp"
-                android:fontFamily="monospace"
-                android:visibility="visible" />
-
-            <FrameLayout
-                android:layout_width="220dp"
-                android:layout_height="220dp"
-                android:layout_gravity="center"
-                android:layout_marginTop="20dp"
-                android:background="@drawable/circular_glow_bg">
-
-                <ProgressBar
-                    android:id="@+id/batteryProgress"
-                    style="?android:attr/progressBarStyleHorizontal"
-                    android:layout_width="match_parent"
-                    android:layout_height="match_parent"
-                    android:indeterminate="false"
-                    android:progress="0"
-                    android:progressDrawable="@drawable/circular_progress_bar" />
-
-                <LinearLayout
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_gravity="center"
-                    android:gravity="center"
-                    android:orientation="vertical">
-
-                    <TextView
-                        android:id="@+id/tvChargingType"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="ANALYZING"
-                        android:textColor="#B0BEC5"
-                        android:textSize="10sp"
-                        android:textAllCaps="true" />
-
-                    <TextView
-                        android:id="@+id/tvBattery"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0%"
-                        android:textColor="@android:color/white"
-                        android:textSize="42sp"
-                        android:textStyle="bold" />
-
-                    <TextView
-                        android:id="@+id/tvChargingSpeed"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0.00 W"
-                        android:textColor="#64FFDA"
-                        android:textSize="18sp"
-                        android:fontFamily="monospace"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </FrameLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="30dp"
-                android:orientation="horizontal">
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:layout_weight="1"
-                    android:layout_margin="4dp"
-                    android:background="@drawable/glass_card_selected"
-                    android:gravity="center"
-                    android:orientation="vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="RAM Load"
-                        android:textColor="#B0BEC5"
-                        android:textSize="12sp" />
-                    <TextView
-                        android:id="@+id/tvRam"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0%"
-                        android:textColor="@android:color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:layout_weight="1"
-                    android:layout_margin="4dp"
-                    android:background="@drawable/glass_card_selected"
-                    android:gravity="center"
-                    android:orientation="vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Storage"
-                        android:textColor="#B0BEC5"
-                        android:textSize="12sp" />
-                    <TextView
-                        android:id="@+id/tvStorage"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0%"
-                        android:textColor="@android:color/white"
-                        android:textSize="18sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-
-                <LinearLayout
-                    android:layout_width="0dp"
-                    android:layout_height="100dp"
-                    android:layout_weight="1"
-                    android:layout_margin="4dp"
-                    android:background="@drawable/glass_card_selected"
-                    android:gravity="center"
-                    android:orientation="vertical">
-                    <TextView
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="Uptime"
-                        android:textColor="#B0BEC5"
-                        android:textSize="12sp" />
-                    <TextView
-                        android:id="@+id/tvUptime"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0h 0m"
-                        android:textColor="@android:color/white"
-                        android:textSize="14sp"
-                        android:textStyle="bold" />
-                </LinearLayout>
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="24dp"
-                android:orientation="vertical">
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:text="Real-Time Health"
-                    android:textColor="@android:color/white"
-                    android:textSize="18sp"
-                    android:layout_marginBottom="12dp"/>
-
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:orientation="horizontal"
-                    android:gravity="center_vertical">
-                    <ImageView
-                        android:layout_width="24dp"
-                        android:layout_height="24dp"
-                        android:src="@drawable/ic_temp"
-                        app:tint="#64FFDA" />
-                    <TextView
-                        android:id="@+id/tvDeviceHealthStatus"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:layout_marginStart="8dp"
-                        android:text="Excellent"
-                        android:textColor="#64FFDA"
-                        android:textStyle="bold" />
-                    <View android:layout_width="0dp" android:layout_height="0dp" android:layout_weight="1"/>
-                    <TextView
-                        android:id="@+id/tvTemperature"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="0.0°C"
-                        android:textColor="@android:color/white" />
-                </LinearLayout>
-
-                <View
-                    android:layout_width="match_parent"
-                    android:layout_height="4dp"
-                    android:layout_marginTop="8dp"
-                    android:background="@drawable/health_bar_gradient" />
-
-                <TextView
-                    android:id="@+id/tvPerformanceTips"
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:text="All systems operating at peak efficiency."
-                    android:textColor="#B0BEC5"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <Button
-                android:id="@+id/btnOpenNetwork"
-                android:layout_width="match_parent"
-                android:layout_height="56dp"
-                android:layout_marginTop="32dp"
-                android:text="Open Network Monitor"
-                android:textAllCaps="false"
-                android:backgroundTint="#1AFFFFFF"
-                app:strokeColor="#4DD8FF"
-                app:strokeWidth="1dp"
-                android:textColor="@android:color/white"
-                app:cornerRadius="28dp" />
-
-            <TextView
-                android:id="@+id/tvFooterInfo"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="40dp"
-                android:layout_marginBottom="20dp"
-                android:gravity="center"
-                android:text="InfoCore Advanced Telemetry • Loading Hardware ID..."
-                android:textColor="#546E7A"
-                android:textSize="11sp" />
-
-        </LinearLayout>
-    </ScrollView>
+    </RelativeLayout>
 
     <com.google.android.material.navigation.NavigationView
         android:id="@+id/navigationView"
@@ -278,4 +294,5 @@
         app:itemShapeInsetEnd="6dp"
         app:itemShapeAppearanceOverlay="@style/ShapeAppearance.Material3.Corner.Full"
         app:menu="@menu/nav_menu" />
+
 </androidx.drawerlayout.widget.DrawerLayout>
