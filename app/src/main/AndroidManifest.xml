@@ -40,7 +40,7 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity android:name=".NetworkActivity" android:exported="false" android:label="Network Diagnostics" />
-        <activity android:name=".BugReportActivity" android:label="Submit Bug Report" android:exported="false" />
+
 
         <receiver android:name=".NotificationActionReceiver" android:exported="false">
             <intent-filter>

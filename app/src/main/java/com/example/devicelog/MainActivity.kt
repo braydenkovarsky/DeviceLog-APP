@@ -17,7 +17,6 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.*
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
@@ -48,7 +47,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var navView: NavigationView
     private lateinit var topAppBar: MaterialToolbar
     private lateinit var mainDashboardContainer: View
+
+    // Ad Variables
     private lateinit var adView: AdView
+    private lateinit var adContainer: View
 
     private val handler = Handler(Looper.getMainLooper())
     private val uiUpdateRunnable = object : Runnable {
@@ -63,9 +65,10 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        // Initialize AdMob Engine
         MobileAds.initialize(this) {}
+
         initViews()
-        loadBannerAd()
 
         setSupportActionBar(topAppBar)
         topAppBar.setNavigationOnClickListener { drawerLayout.openDrawer(navView) }
@@ -73,7 +76,7 @@ class MainActivity : AppCompatActivity() {
         setupMasterAnimations()
         createNotificationChannels()
 
-        // Sync service on startup based on perms + prefs
+        // Sync service on startup
         checkAndSyncServiceState()
         fetchFriendlyDeviceName()
     }
@@ -95,10 +98,25 @@ class MainActivity : AppCompatActivity() {
         tvChargingType = findViewById(R.id.tvChargingType)
         tvNotificationWarning = findViewById(R.id.tvNotificationWarning)
 
+        // Ad UI Setup
+        adContainer = findViewById(R.id.adContainer)
+        adView = findViewById(R.id.adView)
+        val btnCloseAd = findViewById<ImageButton>(R.id.btnCloseAd)
+
+        btnCloseAd.setOnClickListener {
+            adContainer.visibility = View.GONE
+        }
+
+        // Monitoring Toggle restored
+        tvNotificationWarning.setOnClickListener {
+            handleMonitoringToggle()
+        }
+
         navView.setNavigationItemSelectedListener {
             when (it.itemId) {
                 R.id.nav_dashboard -> drawerLayout.closeDrawers()
-                R.id.nav_network -> { // RESTORED NETWORK BUTTON
+                R.id.nav_network -> {
+                    loadBannerAd()
                     startActivity(Intent(this, NetworkActivity::class.java))
                     drawerLayout.closeDrawers()
                 }
@@ -107,6 +125,16 @@ class MainActivity : AppCompatActivity() {
             }
             true
         }
+    }
+
+    // --- AD ENGINE ---
+    private fun loadBannerAd() {
+        val adRequest = AdRequest.Builder().build()
+        adView.adListener = object : AdListener() {
+            override fun onAdLoaded() { adContainer.visibility = View.VISIBLE }
+            override fun onAdFailedToLoad(adError: LoadAdError) { adContainer.visibility = View.GONE }
+        }
+        adView.loadAd(adRequest)
     }
 
     // --- PERMISSION & SERVICE HANDSHAKE ---
@@ -124,66 +152,52 @@ class MainActivity : AppCompatActivity() {
         if (userWantsBg && hasNotificationPermission()) {
             startTelemetryService()
         } else if (!hasNotificationPermission()) {
-            // Kill service if system permissions were revoked
             stopService(Intent(this, TelemetryService::class.java))
         }
     }
 
-    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+    private fun handleMonitoringToggle() {
         val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
-        val active = prefs.getBoolean("user_wants_bg", true) && hasNotificationPermission()
-        val item = menu?.add(Menu.NONE, 1001, Menu.NONE, if (active) "ACTIVE" else "INACTIVE")
-        item?.setIcon(if (active) R.drawable.ic_switch_on else R.drawable.ic_switch_off)
-        item?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS or MenuItem.SHOW_AS_ACTION_WITH_TEXT)
-        return true
-    }
+        val currentlyOn = prefs.getBoolean("user_wants_bg", true)
 
-    override fun onOptionsItemSelected(item: MenuItem): Boolean {
-        if (item.itemId == 1001) {
-            val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
-            val currentlyOn = prefs.getBoolean("user_wants_bg", true)
-
-            if (!currentlyOn) {
-                if (hasNotificationPermission()) {
-                    enableServiceFlow()
-                } else {
-                    showPermissionRequiredDialog()
-                }
+        if (!currentlyOn) {
+            if (hasNotificationPermission()) {
+                enableServiceFlow()
             } else {
-                prefs.edit().putBoolean("user_wants_bg", false).apply()
-                stopService(Intent(this, TelemetryService::class.java))
-                updateStatusUI()
-                invalidateOptionsMenu()
+                showPermissionRequiredDialog()
             }
-            return true
+        } else {
+            prefs.edit().putBoolean("user_wants_bg", false).apply()
+            stopService(Intent(this, TelemetryService::class.java))
+            updateStatusUI()
+            invalidateOptionsMenu()
         }
-        return super.onOptionsItemSelected(item)
     }
 
     private fun showPermissionRequiredDialog() {
         AlertDialog.Builder(this)
             .setTitle("Permissions Required")
-            .setMessage("You need to enable notification permissions to use real-time monitoring. Would you like to go to settings now?")
-            .setPositiveButton("Yes") { _, _ ->
+            .setMessage("Grant notification permissions to enable background telemetry.")
+            .setPositiveButton("Settings") { _, _ ->
                 val intent = Intent().apply {
                     action = Settings.ACTION_APP_NOTIFICATION_SETTINGS
                     putExtra(Settings.EXTRA_APP_PACKAGE, packageName)
                 }
                 startActivity(intent)
             }
-            .setNegativeButton("No", null)
+            .setNegativeButton("Cancel", null)
             .show()
     }
 
     private fun enableServiceFlow() {
         getSharedPreferences("prefs", MODE_PRIVATE).edit().putBoolean("user_wants_bg", true).apply()
         startTelemetryService()
-        Toast.makeText(this, "Real-time monitoring enabled", Toast.LENGTH_SHORT).show()
+        Toast.makeText(this, "Telemetry Active", Toast.LENGTH_SHORT).show()
         updateStatusUI()
         invalidateOptionsMenu()
     }
 
-    // --- SYSTEM HELPERS & TELEMETRY ---
+    // --- TELEMETRY ENGINE ---
 
     private fun refreshDisplay() {
         val bm = getSystemService(BATTERY_SERVICE) as BatteryManager
@@ -207,7 +221,7 @@ class MainActivity : AppCompatActivity() {
             tvChargingSpeed.text = "$currentmA mA"
         }
 
-        // Trickle Charging Logic [2026-01-22]
+        // Trickle Charging Logic [2026-01-22] - Restored
         var label = "Discharging"
         var color = "#FF5252"
         if (plugged != 0) {
@@ -256,7 +270,7 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- HTML & DIALOGS ---
+    // --- LEGAL & SYSTEM OVERLAYS ---
 
     private fun showAboutDialog() {
         val aboutMessage = """
@@ -368,7 +382,19 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // --- UTILITY & LIFECYCLE ---
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
+        val active = prefs.getBoolean("user_wants_bg", true) && hasNotificationPermission()
+        val item = menu?.add(Menu.NONE, 1001, Menu.NONE, if (active) "ACTIVE" else "INACTIVE")
+        item?.setIcon(if (active) R.drawable.ic_switch_on else R.drawable.ic_switch_off)
+        item?.setShowAsAction(MenuItem.SHOW_AS_ACTION_ALWAYS or MenuItem.SHOW_AS_ACTION_WITH_TEXT)
+        return true
+    }
+
+    override fun onOptionsItemSelected(item: MenuItem): Boolean {
+        if (item.itemId == 1001) { handleMonitoringToggle(); return true }
+        return super.onOptionsItemSelected(item)
+    }
 
     private fun updateStatusUI() {
         val active = getSharedPreferences("prefs", MODE_PRIVATE).getBoolean("user_wants_bg", true)
@@ -407,11 +433,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun loadBannerAd() {
-        adView = findViewById(R.id.adView)
-        adView.loadAd(AdRequest.Builder().build())
-    }
-
     private fun setupMasterAnimations() {
         drawerLayout.addDrawerListener(object : DrawerLayout.SimpleDrawerListener() {
             override fun onDrawerSlide(drawerView: View, slideOffset: Float) {
@@ -423,21 +444,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+        adView.resume()
         handler.post(uiUpdateRunnable)
-
-        // Auto-test: If user just enabled perms in settings and returned
-        val prefs = getSharedPreferences("prefs", MODE_PRIVATE)
-        if (hasNotificationPermission() && prefs.getBoolean("user_wants_bg", false)) {
-            startTelemetryService()
-            updateStatusUI()
-        } else if (!hasNotificationPermission()) {
-            updateStatusUI()
-        }
         invalidateOptionsMenu()
     }
 
-    override fun onPause() {
-        super.onPause()
-        handler.removeCallbacks(uiUpdateRunnable)
-    }
+    override fun onPause() { adView.pause(); super.onPause(); handler.removeCallbacks(uiUpdateRunnable) }
+    override fun onDestroy() { adView.destroy(); super.onDestroy() }
 }
