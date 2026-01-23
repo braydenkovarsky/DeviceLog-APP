@@ -191,7 +191,7 @@ class NetworkActivity : AppCompatActivity() {
 
     private fun showAboutDialog() {
         val aboutMessage = """
-    DEVICELOG TERMINAL CORE v1.0.4 
+    DEVICELOG TERMINAL CORE v1.0 
     Revision: 2026.01.22 | Build Architecture: API 35 (Android 16)
     
     1. ANDROID MANIFEST: PERMISSION & COMPONENT LOGIC
