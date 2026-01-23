@@ -104,10 +104,10 @@ class MainActivity : AppCompatActivity() {
         tvChargingType = findViewById(R.id.tvChargingType)
         tvNotificationWarning = findViewById(R.id.tvNotificationWarning)
 
-        // LINK THE NEW VISIBLE BUTTON
+
         btnSubmitBug = findViewById(R.id.btnSubmitBug)
 
-        // Ad UI Setup
+
         adContainer = findViewById(R.id.adContainer)
         adView = findViewById(R.id.adView)
         val btnCloseAd = findViewById<ImageButton>(R.id.btnCloseAd)
@@ -116,12 +116,12 @@ class MainActivity : AppCompatActivity() {
             adContainer.visibility = View.GONE
         }
 
-        // Monitoring Toggle restored
+
         tvNotificationWarning.setOnClickListener {
             handleMonitoringToggle()
         }
 
-        // Submit Bug Feature [CLICK LISTENER ON BUTTON NOW]
+
         btnSubmitBug.setOnClickListener {
             submitBugReport()
         }
@@ -330,7 +330,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun showAboutDialog() {
         val aboutMessage = """
-    DEVICELOG TERMINAL CORE v1.0.4 
+    DEVICELOG TERMINAL CORE v1.0 
     Revision: 2026.01.22 | Build Architecture: API 35 (Android 16)
     
     1. ANDROID MANIFEST: PERMISSION & COMPONENT LOGIC

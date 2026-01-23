@@ -87,7 +87,7 @@ class TelemetryService : Service() {
         // Use a subtle color to indicate active monitoring
         val statusColor = if (isPlugged) "#64FFDA" else "#94A3B8"
 
-        val title = "InfoCore Status: $healthStatus"
+        val title = "Device Status: $healthStatus"
         val content = "$chargingLabel • $maPrefix$ma mA • $pct% • $tempC°C"
 
         val manager = getSystemService(NotificationManager::class.java)
