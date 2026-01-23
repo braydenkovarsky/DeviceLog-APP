@@ -1,4 +1,4 @@
-package com.example.devicelog
+package com.fosomstudios.devicelog
 
 import android.app.*
 import android.content.Context

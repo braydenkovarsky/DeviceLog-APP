@@ -243,11 +243,29 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="40dp"
-                    android:layout_marginBottom="20dp"
                     android:gravity="center"
                     android:text="Device Log Advanced Telemetry • Loading Hardware ID..."
                     android:textColor="#546E7A"
                     android:textSize="11sp" />
+
+                <Button
+                    android:id="@+id/btnSubmitBug"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginTop="12dp"
+                    android:layout_marginBottom="30dp"
+                    android:backgroundTint="#1E293B"
+                    android:fontFamily="monospace"
+                    android:paddingStart="24dp"
+                    android:paddingEnd="24dp"
+                    android:text="SUBMIT A BUG"
+                    android:textColor="#64FFDA"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    app:cornerRadius="8dp"
+                    app:strokeColor="#64FFDA"
+                    app:strokeWidth="1dp" />
 
             </LinearLayout>
         </ScrollView>

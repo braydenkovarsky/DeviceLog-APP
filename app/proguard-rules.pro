@@ -19,14 +19,14 @@
 -keepattributes RuntimeVisibleAnnotations,RuntimeVisibleParameterAnnotations,Annotation*
 
 # Ensure the OS can find your Telemetry Service by name
--keep class com.example.devicelog.TelemetryService { *; }
+-keep class com.fosomstudios.devicelog.TelemetryService { *; }
 
 # -------------------------------------------------------------------------
 # HARDWARE TELEMETRY & DATA MODELS
 # -------------------------------------------------------------------------
 
 # Prevent renaming of internal data structures (Trickle Charging logic)
--keepclassmembers class com.example.devicelog.** { *; }
+-keepclassmembers class com.fosomstudios.devicelog.** { *; }
 
 # -------------------------------------------------------------------------
 # COROUTINES & THREAD SAFETY (ANR PREVENTION)

@@ -1,4 +1,4 @@
-package com.example.devicelog
+package com.fosomstudios.devicelog
 
 import android.Manifest
 import android.app.ActivityManager
@@ -26,6 +26,8 @@ import com.google.android.material.appbar.MaterialToolbar
 import com.google.android.material.navigation.NavigationView
 import org.json.JSONObject
 import java.net.URL
+import java.text.SimpleDateFormat
+import java.util.*
 import kotlin.concurrent.thread
 import kotlin.math.abs
 import kotlin.math.roundToInt
@@ -43,6 +45,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var tvFooterInfo: TextView
     private lateinit var tvDeviceHealthStatus: TextView
     private lateinit var tvNotificationWarning: TextView
+
+    // NEW BUTTON
+    private lateinit var btnSubmitBug: Button
+
     private lateinit var drawerLayout: DrawerLayout
     private lateinit var navView: NavigationView
     private lateinit var topAppBar: MaterialToolbar
@@ -98,6 +104,9 @@ class MainActivity : AppCompatActivity() {
         tvChargingType = findViewById(R.id.tvChargingType)
         tvNotificationWarning = findViewById(R.id.tvNotificationWarning)
 
+        // LINK THE NEW VISIBLE BUTTON
+        btnSubmitBug = findViewById(R.id.btnSubmitBug)
+
         // Ad UI Setup
         adContainer = findViewById(R.id.adContainer)
         adView = findViewById(R.id.adView)
@@ -112,6 +121,11 @@ class MainActivity : AppCompatActivity() {
             handleMonitoringToggle()
         }
 
+        // Submit Bug Feature [CLICK LISTENER ON BUTTON NOW]
+        btnSubmitBug.setOnClickListener {
+            submitBugReport()
+        }
+
         navView.setNavigationItemSelectedListener {
             when (it.itemId) {
                 R.id.nav_dashboard -> drawerLayout.closeDrawers()
@@ -124,6 +138,48 @@ class MainActivity : AppCompatActivity() {
                 R.id.menuPrivacy -> showPrivacyPolicyDialog()
             }
             true
+        }
+    }
+
+    // --- BUG REPORTING ENGINE ---
+    private fun submitBugReport() {
+        val reportTime = SimpleDateFormat("yyyy-MM-dd HH:mm:ss", Locale.getDefault()).format(Date())
+        val deviceName = "${Build.MANUFACTURER} ${Build.MODEL}"
+
+        val reportBody = """
+            Device Log Report
+            ---------------------------
+            Time: $reportTime
+            Device: $deviceName
+            Android SDK: ${Build.VERSION.SDK_INT}
+            
+            [TELEMETRY SNAPSHOT]
+            Battery Level: ${tvBattery.text}
+            Charging Status: ${tvChargingType.text}
+            Current Flow: ${tvChargingSpeed.text}
+            Temperature: ${tvTemperature.text}
+            RAM Usage: ${tvRam.text}
+            Storage Usage: ${tvStorage.text}
+            Uptime: ${tvUptime.text}
+            Health Status: ${tvDeviceHealthStatus.text}
+            
+            [BUG DESCRIPTION]
+            Please describe the issue you are facing below:
+            
+            
+        """.trimIndent()
+
+        val intent = Intent(Intent.ACTION_SENDTO).apply {
+            data = Uri.parse("mailto:")
+            putExtra(Intent.EXTRA_EMAIL, arrayOf("fosomstudios@gmail.com"))
+            putExtra(Intent.EXTRA_SUBJECT, "Device log report")
+            putExtra(Intent.EXTRA_TEXT, reportBody)
+        }
+
+        try {
+            startActivity(intent)
+        } catch (e: Exception) {
+            Toast.makeText(this, "No email app found to submit report.", Toast.LENGTH_SHORT).show()
         }
     }
 

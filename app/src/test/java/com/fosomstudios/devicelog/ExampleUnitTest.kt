@@ -1,4 +1,4 @@
-package com.example.devicelog
+package com.fosomstudios.devicelog
 
 import org.junit.Test
 

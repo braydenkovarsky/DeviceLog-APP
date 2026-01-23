@@ -1,4 +1,4 @@
-package com.example.devicelog
+package com.fosomstudios.devicelog
 
 import android.app.NotificationManager
 import android.content.BroadcastReceiver

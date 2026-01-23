@@ -1,4 +1,4 @@
-package com.example.devicelog
+package com.fosomstudios.devicelog
 
 import android.view.LayoutInflater
 import android.view.View

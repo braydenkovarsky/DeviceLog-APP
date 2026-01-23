@@ -1,4 +1,4 @@
-package com.example.devicelog
+package com.fosomstudios.devicelog
 
 import android.app.Activity
 import android.content.Context
@@ -26,7 +26,6 @@ import java.net.InetAddress
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.Executors
-import android.webkit.WebSettings
 
 class NetworkActivity : AppCompatActivity() {
 

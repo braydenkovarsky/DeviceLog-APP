@@ -4,11 +4,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.devicelog"
+    namespace = "com.fosomstudios.devicelog"
     compileSdk = 35
 
     defaultConfig {
-        applicationId = "com.example.devicelog"
+        applicationId = "com.fosomstudios.devicelog"
         minSdk = 26
         targetSdk = 35
         versionCode = 1
