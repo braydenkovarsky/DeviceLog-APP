@@ -12,7 +12,6 @@
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
   - [Building from Source](#building-from-source)
 - [Usage](#usage)
 - [Permissions](#permissions)
@@ -94,17 +93,7 @@ Before you begin, make sure you have the following installed:
 
 ---
 
-### Installation
-
-#### Option 1 — Install the APK directly
-
-1. Download the latest `.apk` from the [Releases](../../releases) page.
-2. On your Android device, go to **Settings → Security** and enable **Install from Unknown Sources**.
-3. Open the downloaded APK and follow the on-screen prompts to install.
-
-#### Option 2 — Build from Source
-
-Follow the steps below.
+### Build from Source
 
 ---
 
