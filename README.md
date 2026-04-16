@@ -213,6 +213,6 @@ SOFTWARE.
 
 <div align="center">
 
-Made with ☕ and Java by **Brayden Kovarsky-Steingold**
+Made with KOTLIN by **Brayden Kovarsky-Steingold**
 
 </div>
