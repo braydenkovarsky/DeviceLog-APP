@@ -9,13 +9,11 @@
 
 - [Overview](#overview)
 - [Features](#features)
-- [Screenshots](#screenshots)
 - [Tech Stack](#tech-stack)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Building from Source](#building-from-source)
-- [Project Structure](#project-structure)
 - [Usage](#usage)
 - [Permissions](#permissions)
 - [Contributing](#contributing)
@@ -66,18 +64,6 @@ Toggle monitoring on or off at any time, check your device's real-time health st
 - Cyan / teal accent colors on cards, progress bars, and the battery arc
 - Hamburger menu (☰) for navigation
 - Device identifier displayed in footer (DeviceLog Telemetry • [Device Model])
-
----
-
-## 📸 Screenshots
-
-### Home Dashboard
-
-<p align="center">
-  <img src="screenshots/dashboard.jpg" alt="DeviceLog Home Dashboard" width="320"/>
-</p>
-
-> Dark dashboard showing a 30% battery at -99 mA discharge, RAM Load at 62%, Storage at 86%, Uptime at 29h 35m 45s, and an OPTIMAL health status at 24.6°C.
 
 ---
 
@@ -145,37 +131,6 @@ cd DeviceLog
 
    - Connect a physical device via USB (with USB Debugging enabled) or start an emulator
    - Click the **▶ Run** button or press `Shift + F10`
-
----
-
-## 📁 Project Structure
-
-```
-DeviceLog/
-├── app/
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/yourpackage/devicelog/
-│   │   │   │   ├── activities/        # All Activity classes
-│   │   │   │   ├── adapters/          # RecyclerView & list adapters
-│   │   │   │   ├── models/            # Data models / POJOs
-│   │   │   │   ├── services/          # Background monitoring services
-│   │   │   │   ├── utils/             # Helper & utility classes
-│   │   │   │   └── MainActivity.java  # App entry point / main dashboard
-│   │   │   ├── res/
-│   │   │   │   ├── layout/            # XML UI layouts
-│   │   │   │   ├── drawable/          # Icons, circular gauge assets
-│   │   │   │   ├── values/            # Strings, colors (dark theme), themes
-│   │   │   │   └── menu/              # Hamburger nav menu XML
-│   │   │   └── AndroidManifest.xml
-│   │   └── test/                      # Unit tests
-│   └── build.gradle
-├── screenshots/                       # App screenshots for README
-├── gradle/
-├── build.gradle
-├── settings.gradle
-└── README.md
-```
 
 ---
 
